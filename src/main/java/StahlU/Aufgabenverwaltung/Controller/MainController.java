@@ -1,7 +1,6 @@
 package StahlU.Aufgabenverwaltung.Controller;
 
 import StahlU.Aufgabenverwaltung.Objekte.Aufgabe;
-import StahlU.Aufgabenverwaltung.Objekte.AufgabenFenster;
 import StahlU.Aufgabenverwaltung.Objekte.Mitarbeiter;
 import StahlU.Aufgabenverwaltung.Speichern.JsonBackup;
 import StahlU.Aufgabenverwaltung.Speichern.Kontext;
@@ -24,7 +23,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 
 import java.util.Objects;
 
@@ -297,6 +295,9 @@ public void initialize() {
 
     @FXML
     public void removeMitarbeiter(ActionEvent actionEvent) {
+        if (selectedMitarbeiter == null) {
+            return;
+        }
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Mitarbeiter löschen");
         alert.setHeaderText("Sind Sie sicher?");
@@ -317,6 +318,13 @@ public void initialize() {
 
     @FXML
     public void addAufgabe(ActionEvent actionEvent) {
+        if (selectedMitarbeiter == null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Keine Auswahl");
+            alert.setHeaderText("Bitte wählen Sie einen Mitarbeiter aus, um eine Aufgabe hinzuzufügen.");
+            alert.showAndWait();
+            return;
+        }
         if (titleTextField.getText().isEmpty() || descriptionTextField.getText().isEmpty()) {
             return;
         }

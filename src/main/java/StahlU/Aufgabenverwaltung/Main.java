@@ -1,5 +1,6 @@
 package StahlU.Aufgabenverwaltung;
 
+import StahlU.Aufgabenverwaltung.Test.Generator;
 import StahlU.Aufgabenverwaltung.Test.SQLFunktionen;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
@@ -24,7 +25,7 @@ public class Main extends Application {
     public static void main(String[] args) {
         SQLFunktionen.treiberTest();
         SQLFunktionen.createTablesIfNotExists();
-//        Generator.fillTables(1000,10);
+//        Generator.fillTables(1000,50);
         launch();
 
 

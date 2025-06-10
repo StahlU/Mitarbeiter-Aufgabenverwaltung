@@ -19,40 +19,39 @@ public class JsonBackup {
             .setPrettyPrinting()
             .create();
 
-    public static void save(ObservableList<Mitarbeiter> mitarbeiter) {
-        try (Writer writer = new FileWriter(FILE_NAME)) {
-            gson.toJson(mitarbeiter, writer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+public static void save(ObservableList<Mitarbeiter> mitarbeiter) {
+    try (Writer writer = new FileWriter(FILE_NAME)) {
+        gson.toJson(mitarbeiter, writer);
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
+public static ObservableList<Mitarbeiter> load() {
+    File file = new File(FILE_NAME);
+    if (!file.exists()) {
+        return FXCollections.observableArrayList();
     }
 
-    public static ObservableList<Mitarbeiter> load() {
-        File file = new File(FILE_NAME);
-        if (!file.exists()) {
-            return FXCollections.observableArrayList();
+    try (Reader reader = new FileReader(FILE_NAME)) {
+        Mitarbeiter[] mitarbeiterArray = gson.fromJson(reader, Mitarbeiter[].class);
+        ObservableList<Mitarbeiter> mitarbeiterList = FXCollections.observableArrayList(mitarbeiterArray);
+
+
+        for (Mitarbeiter mitarbeiter : mitarbeiterList) {
+            long erledigteAufgaben = mitarbeiter.getAufgaben().stream()
+                .filter(Aufgabe::getStatus)
+                .count();
+            double fortschritt = mitarbeiter.getAufgaben().isEmpty() ? 0.0 : (double) erledigteAufgaben / mitarbeiter.getAufgaben().size();
+            mitarbeiter.fortschrittProperty().set(fortschritt);
         }
 
-        try (Reader reader = new FileReader(FILE_NAME)) {
-            Mitarbeiter[] mitarbeiterArray = gson.fromJson(reader, Mitarbeiter[].class);
-            ObservableList<Mitarbeiter> mitarbeiterList = FXCollections.observableArrayList(mitarbeiterArray);
-
-
-            for (Mitarbeiter mitarbeiter : mitarbeiterList) {
-                long erledigteAufgaben = mitarbeiter.getAufgaben().stream()
-                        .filter(Aufgabe::getStatus)
-                        .count();
-                double fortschritt = mitarbeiter.getAufgaben().isEmpty() ? 0.0 :
-                        (double) erledigteAufgaben / mitarbeiter.getAufgaben().size();
-                mitarbeiter.fortschrittProperty().set(fortschritt);
-            }
-
-            return mitarbeiterList;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return FXCollections.observableArrayList();
-        }
+        return mitarbeiterList;
+    } catch (IOException e) {
+        e.printStackTrace();
+        return FXCollections.observableArrayList();
     }
+}
 
 
     private static class ObservableListTypeAdapter implements JsonSerializer<ObservableList<?>>, JsonDeserializer<ObservableList<?>> {

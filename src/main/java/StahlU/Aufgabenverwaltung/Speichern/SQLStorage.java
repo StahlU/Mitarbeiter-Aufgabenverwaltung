@@ -4,8 +4,6 @@ import StahlU.Aufgabenverwaltung.Objekte.Aufgabe;
 import StahlU.Aufgabenverwaltung.Objekte.Mitarbeiter;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 
 import java.sql.*;
 
