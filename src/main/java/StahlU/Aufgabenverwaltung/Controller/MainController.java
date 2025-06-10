@@ -3,6 +3,7 @@ package StahlU.Aufgabenverwaltung.Controller;
 import StahlU.Aufgabenverwaltung.Objekte.Aufgabe;
 import StahlU.Aufgabenverwaltung.Objekte.AufgabenFenster;
 import StahlU.Aufgabenverwaltung.Objekte.Mitarbeiter;
+import StahlU.Aufgabenverwaltung.Speichern.JsonBackup;
 import StahlU.Aufgabenverwaltung.Speichern.Kontext;
 import StahlU.Aufgabenverwaltung.Speichern.SQLStorage;
 
@@ -22,6 +23,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 import java.util.Objects;
@@ -49,6 +51,7 @@ public class MainController {
 public void initialize() {
 
         kontext.setSpeicherStrategie(new SQLStorage());
+        mitarbeiterListView.setFixedCellSize(25);
 
         mitarbeiterList.setAll(kontext.mitarbeiterLadenAusführen());
         mitarbeiterListView.setItems(mitarbeiterList);
@@ -56,6 +59,7 @@ public void initialize() {
 
         Platform.runLater(() -> {
             mitarbeiterListView.getScene().getWindow().setOnCloseRequest(event -> {
+                JsonBackup.save(mitarbeiterList);
                 Platform.exit();
             });
         });
@@ -115,9 +119,12 @@ public void initialize() {
                 if (empty || aufgabe == null) {
                     setGraphic(null);
                 } else {
+                    VBox vbox = new VBox(5);
+                    vbox.setAlignment(Pos.CENTER_LEFT);
+                    vbox.setPrefWidth(aufgabenListView.getWidth() - 20);
+
                     HBox hbox = new HBox(5);
                     hbox.setAlignment(Pos.CENTER_LEFT);
-                    hbox.setPrefWidth(aufgabenListView.getWidth() - 20);
 
                     CheckBox checkBox = new CheckBox(aufgabe.getTitle());
                     checkBox.setMaxWidth(Double.MAX_VALUE);
@@ -126,6 +133,11 @@ public void initialize() {
                     Button deleteButton = new Button("Löschen");
                     deleteButton.setStyle("-fx-background-color: #ff4444; -fx-text-fill: white;");
 
+                    Label descriptionLabel = new Label(aufgabe.getDescription());
+                    descriptionLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+                    descriptionLabel.setWrapText(true);
+                    descriptionLabel.setMaxWidth(aufgabenListView.getWidth() - 40);
+
                     checkBox.setSelected(aufgabe.getStatus());
                     checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
                         if (selectedMitarbeiter != null) {
@@ -133,6 +145,7 @@ public void initialize() {
                             mitarbeiterListView.refresh();
                         }
                     });
+
                     deleteButton.setOnAction(event -> {
                         if (selectedMitarbeiter != null) {
                             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -148,12 +161,12 @@ public void initialize() {
                             kontext.aufgabeLöschenAusführen(selectedMitarbeiter, aufgabe);
                             aufgabenListView.getItems().remove(aufgabe);
                             mitarbeiterListView.refresh();
-
                         }
                     });
 
                     hbox.getChildren().addAll(checkBox, deleteButton);
-                    setGraphic(hbox);
+                    vbox.getChildren().addAll(hbox, descriptionLabel);
+                    setGraphic(vbox);
                 }
             }
         });
@@ -217,6 +230,8 @@ public void initialize() {
 
         searchDelay = new Timeline(new KeyFrame(javafx.util.Duration.millis(500), event -> {
             mitarbeiterSearchList.clear();
+            aufgabenListView.setItems(null);
+
 
             mitarbeiterSearchList.setAll(
                 mitarbeiterList.stream()
@@ -227,9 +242,10 @@ public void initialize() {
             );
 
             if (mitarbeiterSearchList.isEmpty()) {
-                mitarbeiterListView.setItems(mitarbeiterList);
+                mitarbeiterListView.setItems(null);
             } else {
                 mitarbeiterListView.setItems(mitarbeiterSearchList);
+                mitarbeiterListView.setPlaceholder(new Label("Keine Mitarbeiter gefunden"));
             }
         }));
 

@@ -19,7 +19,7 @@ public class Aufgabe {
 
 
     public Aufgabe(String title, String description) {
-        this.ID = -1; // Default value, can be set later
+        this.ID = -1;
         this.title = title;
         this.description = description;
         this.status = false;
@@ -80,14 +80,6 @@ public void setBeschreibung(String beschreibung) {
             beschreibungProperty.set(beschreibung);
         }
     }
-
-public void setErledigt(boolean b) {
-    this.status = b;
-    if (erledigtProperty != null) {
-        erledigtProperty.set(b);
-    }
-
-}
 
 
 }

@@ -13,7 +13,7 @@ public class Main extends Application {
     public void start(Stage stage) throws IOException {
 
 
-        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("progress tracker.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("Task tracker.fxml"));
         Scene scene = new Scene(fxmlLoader.load());
 
         stage.setTitle("Mitarbeiter Aufgabenverwaltung!");
@@ -24,6 +24,7 @@ public class Main extends Application {
     public static void main(String[] args) {
         SQLFunktionen.treiberTest();
         SQLFunktionen.createTablesIfNotExists();
+//        Generator.fillTables(1000,10);
         launch();
 
 

@@ -29,14 +29,12 @@ public class Kontext {
     public Mitarbeiter mitarbeiterSpeichernAusführen(String name, String surname) {
         Mitarbeiter mitarbeiter = new Mitarbeiter(-1,name, surname);
         this.speicherStrategie.mitarbeiterSpeichern(name,surname);
-        saveToJson();
         return mitarbeiter;
     }
 
     public void mitarbeiterLöschenAusführen(Mitarbeiter mitarbeiter) {
-
         this.speicherStrategie.mitarbeiterLöschen(mitarbeiter);
-        saveToJson();
+
     }
 
 
@@ -46,7 +44,6 @@ public class Kontext {
         for (Aufgabe aufgabe : liste) {
             mitarbeiter.addAufgabe(aufgabe);
         }
-
         return liste;
     }
 
@@ -56,26 +53,24 @@ public class Kontext {
         mitarbeiter.addAufgabe(aufgabe);
 
         this.speicherStrategie.aufgabeSpeichern(mitarbeiter, aufgabe);
-        saveToJson();
 
     }
     public void aufgabeStatusAenderungAusführen(Aufgabe aufgabe) {
         this.speicherStrategie.aufgabeStatusAenderung(aufgabe);
-        saveToJson();
+
     }
 
 
     public void aufgabeLöschenAusführen(Mitarbeiter selectedMitarbeiter, Aufgabe aufgabe) {
         selectedMitarbeiter.removeAufgabe(aufgabe);
         this.speicherStrategie.aufgabeLöschen(aufgabe);
-        saveToJson();
+
     }
 
 
     public void saveToJson() {
         ObservableList<Mitarbeiter> mitarbeiterList = mitarbeiterLadenAusführen();
         JsonBackup.save(mitarbeiterList);
-
 
     }
 }

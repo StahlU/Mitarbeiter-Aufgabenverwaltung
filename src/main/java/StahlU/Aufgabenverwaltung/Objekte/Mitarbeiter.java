@@ -33,9 +33,6 @@ public class Mitarbeiter {
         return employeeID;
     }
 
-    public void setEmployeeID(int employeeID) {
-        this.employeeID = employeeID;
-    }
 
     public String getName() {
 

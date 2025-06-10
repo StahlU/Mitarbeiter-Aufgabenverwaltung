@@ -1,6 +1,13 @@
 package StahlU.Aufgabenverwaltung.Test;
 
-public class AufgabenGenerator {
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.Random;
+
+public class Generator {
+    private static final String URL = "jdbc:sqlite:SQL.db";
 
     private static final String[] namen = {
             "Herbert","Norbert","Gisela","Michael","Frederik","Max","Nils","Mathias", "Jürgen","Daniel",
@@ -113,6 +120,56 @@ public class AufgabenGenerator {
             "Trompete spielen", "Comics zeichnen", "Geschichten schreiben", "Gedichte schreiben", "Tagebuch führen", "Webdesign",
             "App-Entwicklung", "Datenanalyse", "Mathematische Probleme lösen", "Chemieexperimente", "Physikexperimente"
     };
+
+public static void fillTables(int numberOfEmployees, int maxTasksPerEmployee) {
+    Random random = new Random();
+
+    try (Connection conn = DriverManager.getConnection(URL)) {
+        conn.setAutoCommit(false);
+
+
+        String mitarbeiterSql = "INSERT INTO mitarbeiter(name, surname) VALUES(?, ?)";
+        String auftraegeSql = "INSERT INTO auftraege(title, description, status) VALUES(?, ?, ?)";
+        String mitarbeiterAuftraegeSql = "INSERT INTO mitarbeiter_auftraege(mitarbeiter_id, auftrag_id, assigned_date) VALUES(?, ?, date('now'))";
+
+        try (PreparedStatement mitarbeiterStmt = conn.prepareStatement(mitarbeiterSql)) {
+            for (int i = 0; i < numberOfEmployees; i++) {
+                mitarbeiterStmt.setString(1, namen[random.nextInt(namen.length)]);
+                mitarbeiterStmt.setString(2, nachnamen[random.nextInt(nachnamen.length)]);
+                mitarbeiterStmt.executeUpdate();
+            }
+        }
+
+        int totalTasks = 0;
+        try (PreparedStatement auftraegeStmt = conn.prepareStatement(auftraegeSql)) {
+            for (int i = 0; i < numberOfEmployees; i++) {
+                int tasksForEmployee = random.nextInt(maxTasksPerEmployee) + 1;
+                totalTasks += tasksForEmployee;
+                for (int j = 0; j < tasksForEmployee; j++) {
+                    auftraegeStmt.setString(1, aufgaben[random.nextInt(aufgaben.length)]);
+                    auftraegeStmt.setString(2, "Beschreibung " + (totalTasks));
+                    auftraegeStmt.setInt(3, random.nextBoolean() ? 1 : 0);
+                    auftraegeStmt.executeUpdate();
+                }
+            }
+        }
+
+
+        try (PreparedStatement mitarbeiterAuftraegeStmt = conn.prepareStatement(mitarbeiterAuftraegeSql)) {
+            for (int taskId = 1; taskId <= totalTasks; taskId++) {
+                int employeeId = random.nextInt(numberOfEmployees) + 1; // Random employee ID
+                mitarbeiterAuftraegeStmt.setInt(1, employeeId);
+                mitarbeiterAuftraegeStmt.setInt(2, taskId);
+                mitarbeiterAuftraegeStmt.executeUpdate();
+            }
+        }
+
+        conn.commit();
+        System.out.println("Tabellen erfolgreich gefüllt mit " + numberOfEmployees + " Mitarbeitern und " + totalTasks + " Aufgaben.");
+    } catch (SQLException e) {
+        System.out.println("Fehler beim Befüllen der Tabellen: " + e.getMessage());
+    }
+}
 
 
 }
