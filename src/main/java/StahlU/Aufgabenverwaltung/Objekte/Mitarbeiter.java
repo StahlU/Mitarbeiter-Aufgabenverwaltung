@@ -64,6 +64,8 @@ public double getFortschritt() {
     return fortschrittProperty.get();
 }
 
+
+
 public SimpleDoubleProperty fortschrittProperty() {
 
     if (fortschrittProperty == null) {
@@ -94,7 +96,7 @@ public void aufgabeErledigt(Aufgabe aufgabe, boolean erledigt, Kontext kontextDa
 }
 
 
-private void updateFortschritt() {
+public void updateFortschritt() {
     if (aufgaben.isEmpty()) {
         if (fortschrittProperty != null) {
             fortschrittProperty.set(0);
@@ -127,5 +129,12 @@ public String toString() {
     return sb.toString();
 }
 
-
+public boolean hatAufgabe(Aufgabe aufgabe) {
+    if (aufgaben.contains(aufgabe)) {
+        return true;
+    }
+    return false;
+    }
 }
+
+

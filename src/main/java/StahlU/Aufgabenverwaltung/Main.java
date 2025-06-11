@@ -25,7 +25,7 @@ public class Main extends Application {
     public static void main(String[] args) {
         SQLFunktionen.treiberTest();
         SQLFunktionen.createTablesIfNotExists();
-//        Generator.fillTables(1000,50);
+//        Generator.fillTables(100,10);
         launch();
 
 

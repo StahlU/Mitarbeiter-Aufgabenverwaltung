@@ -13,16 +13,7 @@ public class Kontext {
 
 
     public ObservableList<Mitarbeiter> mitarbeiterLadenAusführen() {
-        ObservableList<Mitarbeiter> mitarbeiterList = this.speicherStrategie.mitarbeiterLaden();
-
-        for (Mitarbeiter mitarbeiter : mitarbeiterList) {
-            ObservableList<Aufgabe> aufgaben = this.speicherStrategie.aufgabenLaden(mitarbeiter);
-            for (Aufgabe aufgabe : aufgaben) {
-                mitarbeiter.addAufgabe(aufgabe);
-            }
-        }
-
-        return mitarbeiterList;
+        return this.speicherStrategie.mitarbeiterLaden();
     }
 
 
@@ -51,7 +42,6 @@ public class Kontext {
     public void aufgabeSpeichernAusführen(Mitarbeiter mitarbeiter, String titleText, String titledescription) {
         Aufgabe aufgabe = new Aufgabe(titleText,titledescription);
         mitarbeiter.addAufgabe(aufgabe);
-
         this.speicherStrategie.aufgabeSpeichern(mitarbeiter, aufgabe);
 
     }
@@ -61,8 +51,8 @@ public class Kontext {
     }
 
 
-    public void aufgabeLöschenAusführen(Mitarbeiter selectedMitarbeiter, Aufgabe aufgabe) {
-        selectedMitarbeiter.removeAufgabe(aufgabe);
+    public void aufgabeLöschenAusführen(Mitarbeiter mitarbeiter, Aufgabe aufgabe) {
+        mitarbeiter.removeAufgabe(aufgabe);
         this.speicherStrategie.aufgabeLöschen(aufgabe);
 
     }
@@ -73,4 +63,10 @@ public class Kontext {
         JsonBackup.save(mitarbeiterList);
 
     }
+
+public void aufgabeDatenÄndernAusführen(Aufgabe aufgabe) {
+    this.speicherStrategie.aufgabeDatenÄndern(aufgabe);
+}
+
+
 }

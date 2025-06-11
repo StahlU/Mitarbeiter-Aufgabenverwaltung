@@ -13,6 +13,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -20,6 +21,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
@@ -50,6 +52,7 @@ public void initialize() {
 
         kontext.setSpeicherStrategie(new SQLStorage());
         mitarbeiterListView.setFixedCellSize(25);
+
 
         mitarbeiterList.setAll(kontext.mitarbeiterLadenAusführen());
         mitarbeiterListView.setItems(mitarbeiterList);
@@ -116,23 +119,28 @@ public void initialize() {
                 super.updateItem(aufgabe, empty);
                 if (empty || aufgabe == null) {
                     setGraphic(null);
+                    setStyle("");
                 } else {
+                    setMaxWidth(aufgabenListView.getWidth() - 40);
+
                     VBox vbox = new VBox(5);
                     vbox.setAlignment(Pos.CENTER_LEFT);
-                    vbox.setPrefWidth(aufgabenListView.getWidth() - 20);
 
                     HBox hbox = new HBox(5);
                     hbox.setAlignment(Pos.CENTER_LEFT);
 
                     CheckBox checkBox = new CheckBox(aufgabe.getTitle());
-                    checkBox.setMaxWidth(Double.MAX_VALUE);
-                    HBox.setHgrow(checkBox, javafx.scene.layout.Priority.ALWAYS);
+
+                    Region spacer = new Region();
+                    spacer.setMaxWidth(Double.MAX_VALUE);
+
+                    HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
 
                     Button deleteButton = new Button("Löschen");
                     deleteButton.setStyle("-fx-background-color: #ff4444; -fx-text-fill: white;");
 
                     Label descriptionLabel = new Label(aufgabe.getDescription());
-                    descriptionLabel.setStyle("-fx-font-size: 12px; -fx-text-fill: gray;");
+
                     descriptionLabel.setWrapText(true);
                     descriptionLabel.setMaxWidth(aufgabenListView.getWidth() - 40);
 
@@ -145,26 +153,23 @@ public void initialize() {
                     });
 
                     deleteButton.setOnAction(event -> {
-                        if (selectedMitarbeiter != null) {
-                            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                            alert.setTitle("Aufgabe löschen");
-                            alert.setHeaderText("Sind Sie sicher?");
-                            alert.setContentText("Möchten Sie die Aufgabe wirklich löschen?");
-
-                            ButtonType result = alert.showAndWait().orElse(ButtonType.CANCEL);
-                            if (result != ButtonType.OK) {
-                                return;
-                            }
-
-                            kontext.aufgabeLöschenAusführen(selectedMitarbeiter, aufgabe);
-                            aufgabenListView.getItems().remove(aufgabe);
-                            mitarbeiterListView.refresh();
-                        }
+                        removeAufgabe(aufgabe);
+                        mitarbeiterListView.refresh();
                     });
 
-                    hbox.getChildren().addAll(checkBox, deleteButton);
+                    hbox.getChildren().addAll(checkBox,spacer, deleteButton);
                     vbox.getChildren().addAll(hbox, descriptionLabel);
                     setGraphic(vbox);
+
+                    ContextMenu contextMenu = new ContextMenu();
+                    MenuItem deleteItem = new MenuItem("Aufgabe löschen");
+                    MenuItem editItem = new MenuItem("Aufgabe bearbeiten");
+
+                    deleteItem.setOnAction(e -> removeAufgabe(aufgabe));
+                    editItem.setOnAction(e -> updateAufgabe(aufgabe));
+
+                    contextMenu.getItems().addAll(deleteItem, editItem);
+                    setContextMenu(contextMenu);
                 }
             }
         });
@@ -207,6 +212,9 @@ public void initialize() {
 
             ObservableList<Aufgabe> aufgaben = kontext.aufgabenLadenAusführen(selectedMitarbeiter);
             aufgabenListView.setItems(aufgaben);
+            aufgabenListView.setPlaceholder(new Label("Keine Aufgaben für diesen Mitarbeiter"));
+            aufgabenListView.getSelectionModel().clearSelection();
+
 
                 if (aufgabenListView.getItems() != null) {
                     aufgabenListView.setItems(aufgaben);
@@ -216,7 +224,6 @@ public void initialize() {
 
         }
     }
-
 
     private Timeline searchDelay;
 
@@ -318,6 +325,11 @@ public void initialize() {
 
     @FXML
     public void addAufgabe(ActionEvent actionEvent) {
+
+        if (titleTextField.getText().isEmpty() || descriptionTextField.getText().isEmpty()) {
+            return;
+        }
+
         if (selectedMitarbeiter == null) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Keine Auswahl");
@@ -325,26 +337,95 @@ public void initialize() {
             alert.showAndWait();
             return;
         }
-        if (titleTextField.getText().isEmpty() || descriptionTextField.getText().isEmpty()) {
-            return;
-        }
 
         String titleText = this.titleTextField.getText();
         String titledescription = this.descriptionTextField.getText();
 
-        if (selectedMitarbeiter != null) {
+        kontext.aufgabeSpeichernAusführen(selectedMitarbeiter,titleText,titledescription);
+        this.titleTextField.clear();
+        this.descriptionTextField.clear();
+        mitarbeiterListView.refresh();
 
-
-            kontext.aufgabeSpeichernAusführen(selectedMitarbeiter,titleText,titledescription);
-            this.titleTextField.clear();
-            this.descriptionTextField.clear();
-            mitarbeiterListView.refresh();
-        }
         ObservableList<Aufgabe> aufgaben = kontext.aufgabenLadenAusführen(selectedMitarbeiter);
         aufgabenListView.setItems(aufgaben);
         mitarbeiterListView.requestFocus();
 
     }
+
+    public void removeAufgabe(Aufgabe aufgabe) {
+
+        if (selectedMitarbeiter != null) {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Aufgabe löschen");
+            alert.setHeaderText("Sind Sie sicher?");
+            alert.setContentText("Möchten Sie die Aufgabe wirklich löschen?");
+
+            ButtonType result = alert.showAndWait().orElse(ButtonType.CANCEL);
+            if (result != ButtonType.OK) {
+                return;
+            }
+
+            kontext.aufgabeLöschenAusführen(selectedMitarbeiter, aufgabe);
+            mitarbeiterListView.getItems().forEach(mitarbeiter ->{
+                if(mitarbeiter.hatAufgabe(aufgabe)) {
+                    mitarbeiter.removeAufgabe(aufgabe);
+                }});
+
+            aufgabenListView.getItems().remove(aufgabe);
+            mitarbeiterListView.refresh();
+        }
+    }
+
+    public void updateAufgabe(Aufgabe aufgabe) {
+        if (aufgabe == null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Keine Auswahl");
+            alert.setHeaderText("Keine Aufgabe ausgewählt");
+            alert.setContentText("Bitte wählen Sie eine Aufgabe aus, um sie zu bearbeiten.");
+            alert.showAndWait();
+            return;
+        }
+
+        Dialog<Aufgabe> dialog = new Dialog<>();
+        dialog.setTitle("Aufgabe bearbeiten");
+        dialog.setHeaderText("Bearbeiten Sie die ausgewählte Aufgabe");
+
+        ButtonType saveButtonType = new ButtonType("Speichern", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+
+        TextField titleField = new TextField(aufgabe.getTitle());
+        TextArea descriptionField = new TextArea(aufgabe.getDescription());
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(20, 150, 10, 10));
+
+        grid.add(new Label("Titel:"), 0, 0);
+        grid.add(titleField, 1, 0);
+        grid.add(new Label("Beschreibung:"), 0, 1);
+        grid.add(descriptionField, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+
+
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == saveButtonType) {
+                aufgabe.setBeschreibung(descriptionField.getText());
+                aufgabe.setTitle(titleField.getText());
+                System.out.println("speichern");
+                return aufgabe;
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(updatedAufgabe -> {
+            System.out.println("Aufgabe aktualisiert: " + updatedAufgabe.getTitle()+" " + updatedAufgabe.getDescription());
+            kontext.aufgabeDatenÄndernAusführen(aufgabe);
+            aufgabenListView.refresh();
+        });
+    }
+
     @FXML
     public void newAufgabe(ActionEvent actionEvent) {
 
@@ -353,7 +434,6 @@ public void initialize() {
 //        AufgabenFenster mitarbeiterFenster = AufgabenFenster.getInstance();
 //        mitarbeiterFenster.show(mainStage);
     }
-
 
 }
 
