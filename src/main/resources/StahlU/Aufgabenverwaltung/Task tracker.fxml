@@ -49,7 +49,6 @@
                </VBox.margin>
                <children>
                       <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Aufgaben:" HBox.hgrow="ALWAYS" />
-                  <Button mnemonicParsing="false" onAction="#newAufgabe" text="Neue Aufgabe" />
                </children>
             </HBox>
                 <ListView fx:id="aufgabenListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
