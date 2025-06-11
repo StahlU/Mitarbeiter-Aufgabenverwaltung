@@ -426,15 +426,6 @@ public void initialize() {
         });
     }
 
-    @FXML
-    public void newAufgabe(ActionEvent actionEvent) {
-
-        System.out.println("Neue Aufgabe erstellen noch in bearbeitung...");
-//        Stage mainStage = (Stage) mitarbeiterListView.getScene().getWindow();
-//        AufgabenFenster mitarbeiterFenster = AufgabenFenster.getInstance();
-//        mitarbeiterFenster.show(mainStage);
-    }
-
 }
 
 
