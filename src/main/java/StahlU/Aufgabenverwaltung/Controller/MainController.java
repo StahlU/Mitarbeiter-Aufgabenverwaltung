@@ -79,7 +79,6 @@ public class MainController {
                     setGraphic(null);
                 } else {
                     mitarbeiterListenAnsicht.setFixedCellSize(25);
-                    System.setProperty("java.util.logging.config.file", "logging.properties");
                     nameLabel.setText(mitarbeiter.getMitarbeiterId() + " " + mitarbeiter.getVorname() + " " + mitarbeiter.getNachname());
                     fortschrittBalken.progressProperty().unbind();
                     fortschrittBalken.progressProperty().bind(mitarbeiter.fortschrittEigenschaft());

@@ -18,6 +18,7 @@ public class SQLStorage implements ISpeicherStrategie {
     public ObservableList<Mitarbeiter> mitarbeiterLaden() {
         ObservableList<Mitarbeiter> mitarbeiterListe = FXCollections.observableArrayList();
         String sql = "SELECT * FROM mitarbeiter";
+
         try (Connection conn = DriverManager.getConnection(url);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
@@ -37,6 +38,7 @@ public class SQLStorage implements ISpeicherStrategie {
     @Override
     public void mitarbeiterSpeichern(String vorname, String nachname) {
         String sql = "INSERT INTO mitarbeiter(vorname, nachname) VALUES(?,?)";
+
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, vorname);
@@ -51,6 +53,7 @@ public class SQLStorage implements ISpeicherStrategie {
     public void mitarbeiterLöschen(Mitarbeiter mitarbeiter) {
         String sqlZuordnungen = "DELETE FROM mitarbeiter_aufgaben WHERE mitarbeiter_id = ?";
         String sqlMitarbeiter = "DELETE FROM mitarbeiter WHERE mitarbeiter_id = ?";
+
         try (Connection conn = DriverManager.getConnection(url)) {
             conn.createStatement().execute("PRAGMA foreign_keys = ON;");
             try (PreparedStatement stmtZuordnungen = conn.prepareStatement(sqlZuordnungen)) {
@@ -71,6 +74,7 @@ public class SQLStorage implements ISpeicherStrategie {
         ObservableList<Aufgabe> aufgabenListe = FXCollections.observableArrayList();
         String sqlAufgaben = "SELECT * FROM aufgaben";
         String sqlZuordnung = "SELECT mitarbeiter_id FROM mitarbeiter_aufgaben WHERE aufgabe_id = ?";
+
         Map<Integer, Mitarbeiter> mitarbeiterCache = new HashMap<>();
         for (Mitarbeiter m : globaleMitarbeiterListe) {
             mitarbeiterCache.put(m.getMitarbeiterId(), m);
@@ -119,6 +123,7 @@ public class SQLStorage implements ISpeicherStrategie {
     public void aufgabeSpeichern(Mitarbeiter mitarbeiter, Aufgabe aufgabe) {
         String sqlAufgabe = "INSERT INTO aufgaben(titel, beschreibung, status) VALUES(?,?,?)";
         String sqlZuordnung = "INSERT INTO mitarbeiter_aufgaben(mitarbeiter_id, aufgabe_id, zugewiesen_am) VALUES(?,?,?)";
+
         int aufgabeId = -1;
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sqlAufgabe, Statement.RETURN_GENERATED_KEYS)) {
@@ -155,6 +160,7 @@ public class SQLStorage implements ISpeicherStrategie {
     @Override
     public void aufgabeStatusAenderung(Aufgabe aufgabe) {
         String sql = "UPDATE aufgaben SET status = ? WHERE aufgabe_id = ?";
+
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, aufgabe.isErledigt() ? 1 : 0);
@@ -174,6 +180,7 @@ public class SQLStorage implements ISpeicherStrategie {
         }
         String sqlZuordnung = "DELETE FROM mitarbeiter_aufgaben WHERE aufgabe_id = ?";
         String sqlAufgabe = "DELETE FROM aufgaben WHERE aufgabe_id = ?";
+
         try (Connection conn = DriverManager.getConnection(url)) {
             conn.createStatement().execute("PRAGMA foreign_keys = ON;");
             try (PreparedStatement stmtZuordnung = conn.prepareStatement(sqlZuordnung)) {
@@ -192,6 +199,7 @@ public class SQLStorage implements ISpeicherStrategie {
     @Override
     public void aufgabeDatenÄndern(Aufgabe aufgabe) {
         String sql = "UPDATE aufgaben SET titel = ?, beschreibung = ? WHERE aufgabe_id = ?";
+
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, aufgabe.getTitel());
@@ -205,8 +213,9 @@ public class SQLStorage implements ISpeicherStrategie {
 
     @Override
     public void aufgabeEntfernen(Mitarbeiter mitarbeiter, Aufgabe aufgabe) {
-        // Implementiert das Entfernen der Zuordnung eines Mitarbeiters zu einer Aufgabe
+
         String sql = "DELETE FROM mitarbeiter_aufgaben WHERE mitarbeiter_id = ? AND aufgabe_id = ?";
+
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, mitarbeiter.getMitarbeiterId());
@@ -215,15 +224,15 @@ public class SQLStorage implements ISpeicherStrategie {
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        // Optional: Mitarbeiter aus der Aufgabenliste entfernen
+
         aufgabe.getMitarbeiterListe().remove(mitarbeiter);
     }
 
-    // Die alte Methode aufgabenLaden(Mitarbeiter) kann entfernt oder leer gelassen werden
+
     @Deprecated
     public ObservableList<Aufgabe> aufgabenLaden(Mitarbeiter mitarbeiter) {
         return FXCollections.observableArrayList();
     }
 
-    // ...restlicher Code...
+
 }

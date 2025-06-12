@@ -154,7 +154,6 @@ public static void fillTables(int numberOfEmployees, int numberOfTasks) {
             }
         }
 
-        // Korrigierte Tabellennamen und Spaltennamen für Zuordnung
         String mitarbeiterAufgabenSql = "INSERT INTO mitarbeiter_aufgaben(mitarbeiter_id, aufgabe_id, zugewiesen_am) VALUES(?, ?, date('now'))";
         try (PreparedStatement mitarbeiterAufgabenStmt = conn.prepareStatement(mitarbeiterAufgabenSql)) {
             for (int employeeId = 1; employeeId <= numberOfEmployees; employeeId++) {
