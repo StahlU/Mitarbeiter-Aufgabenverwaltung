@@ -1,6 +1,6 @@
 package StahlU.Aufgabenverwaltung.Speichern;
 
-import StahlU.Aufgabenverwaltung.Objekte.Aufgabe;
+import StahlU.Aufgabenverwaltung.Objekte.Task;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import javafx.collections.FXCollections;
@@ -16,24 +16,23 @@ public class JsonBackup {
             .setPrettyPrinting()
             .create();
 
-    public static void save(ObservableList<Aufgabe> aufgabenListe) {
+    public static void save(ObservableList<Task> taskList) {
         try (Writer writer = new FileWriter(FILE_NAME)) {
-            gson.toJson(aufgabenListe, writer);
+            gson.toJson(taskList, writer);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-
-    public static ObservableList<Aufgabe> load() {
+    public static ObservableList<Task> load() {
         File file = new File(FILE_NAME);
         if (!file.exists()) {
             return FXCollections.observableArrayList();
         }
         try (Reader reader = new FileReader(FILE_NAME)) {
-            Type listType = new TypeToken<List<Aufgabe>>() {}.getType();
-            List<Aufgabe> aufgaben = gson.fromJson(reader, listType);
-            return FXCollections.observableArrayList(aufgaben);
+            Type listType = new TypeToken<List<Task>>() {}.getType();
+            List<Task> tasks = gson.fromJson(reader, listType);
+            return FXCollections.observableArrayList(tasks);
         } catch (IOException e) {
             e.printStackTrace();
             return FXCollections.observableArrayList();

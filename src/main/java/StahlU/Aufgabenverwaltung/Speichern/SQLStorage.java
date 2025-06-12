@@ -1,7 +1,7 @@
 package StahlU.Aufgabenverwaltung.Speichern;
 
-import StahlU.Aufgabenverwaltung.Objekte.Aufgabe;
-import StahlU.Aufgabenverwaltung.Objekte.Mitarbeiter;
+import StahlU.Aufgabenverwaltung.Objekte.Task;
+import StahlU.Aufgabenverwaltung.Objekte.Employee;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -9,40 +9,40 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SQLStorage implements ISpeicherStrategie {
+public class SQLStorage implements IStorageStrategy {
 
     private static String url = "jdbc:sqlite:SQL.db";
-    private Map<Integer, Aufgabe> aufgabenMap = new HashMap<>();
+    private Map<Integer, Task> taskMap = new HashMap<>();
 
     @Override
-    public ObservableList<Mitarbeiter> mitarbeiterLaden() {
-        ObservableList<Mitarbeiter> mitarbeiterListe = FXCollections.observableArrayList();
+    public ObservableList<Employee> loadEmployees() {
+        ObservableList<Employee> employeeList = FXCollections.observableArrayList();
         String sql = "SELECT * FROM mitarbeiter";
 
         try (Connection conn = DriverManager.getConnection(url);
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                Mitarbeiter mitarbeiter = new Mitarbeiter(
+                Employee employee = new Employee(
                         rs.getInt("mitarbeiter_id"),
                         rs.getString("vorname"),
                         rs.getString("nachname"));
-                mitarbeiterListe.add(mitarbeiter);
+                employeeList.add(employee);
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        return mitarbeiterListe;
+        return employeeList;
     }
 
     @Override
-    public void mitarbeiterSpeichern(String vorname, String nachname) {
+    public void saveEmployee(String firstName, String lastName) {
         String sql = "INSERT INTO mitarbeiter(vorname, nachname) VALUES(?,?)";
 
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, vorname);
-            pstmt.setString(2, nachname);
+            pstmt.setString(1, firstName);
+            pstmt.setString(2, lastName);
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -50,19 +50,19 @@ public class SQLStorage implements ISpeicherStrategie {
     }
 
     @Override
-    public void mitarbeiterLöschen(Mitarbeiter mitarbeiter) {
-        String sqlZuordnungen = "DELETE FROM mitarbeiter_aufgaben WHERE mitarbeiter_id = ?";
-        String sqlMitarbeiter = "DELETE FROM mitarbeiter WHERE mitarbeiter_id = ?";
+    public void deleteEmployee(Employee employee) {
+        String sqlAssignments = "DELETE FROM mitarbeiter_aufgaben WHERE mitarbeiter_id = ?";
+        String sqlEmployee = "DELETE FROM mitarbeiter WHERE mitarbeiter_id = ?";
 
         try (Connection conn = DriverManager.getConnection(url)) {
             conn.createStatement().execute("PRAGMA foreign_keys = ON;");
-            try (PreparedStatement stmtZuordnungen = conn.prepareStatement(sqlZuordnungen)) {
-                stmtZuordnungen.setInt(1, mitarbeiter.getMitarbeiterId());
-                stmtZuordnungen.executeUpdate();
+            try (PreparedStatement stmtAssignments = conn.prepareStatement(sqlAssignments)) {
+                stmtAssignments.setInt(1, employee.getEmployeeId());
+                stmtAssignments.executeUpdate();
             }
-            try (PreparedStatement stmtMitarbeiter = conn.prepareStatement(sqlMitarbeiter)) {
-                stmtMitarbeiter.setInt(1, mitarbeiter.getMitarbeiterId());
-                stmtMitarbeiter.executeUpdate();
+            try (PreparedStatement stmtEmployee = conn.prepareStatement(sqlEmployee)) {
+                stmtEmployee.setInt(1, employee.getEmployeeId());
+                stmtEmployee.executeUpdate();
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -70,86 +70,86 @@ public class SQLStorage implements ISpeicherStrategie {
     }
 
     @Override
-    public ObservableList<Aufgabe> aufgabenLaden(Mitarbeiter mitarbeiter, ObservableList<Mitarbeiter> globaleMitarbeiterListe) {
-        ObservableList<Aufgabe> aufgabenListe = FXCollections.observableArrayList();
-        String sqlAufgaben = "SELECT * FROM aufgaben";
-        String sqlZuordnung = "SELECT mitarbeiter_id FROM mitarbeiter_aufgaben WHERE aufgabe_id = ?";
+    public ObservableList<Task> loadTasks(Employee employee, ObservableList<Employee> globalEmployeeList) {
+        ObservableList<Task> taskList = FXCollections.observableArrayList();
+        String sqlTasks = "SELECT * FROM aufgaben";
+        String sqlAssignment = "SELECT mitarbeiter_id FROM mitarbeiter_aufgaben WHERE aufgabe_id = ?";
 
-        Map<Integer, Mitarbeiter> mitarbeiterCache = new HashMap<>();
-        for (Mitarbeiter m : globaleMitarbeiterListe) {
-            mitarbeiterCache.put(m.getMitarbeiterId(), m);
+        Map<Integer, Employee> employeeCache = new HashMap<>();
+        for (Employee e : globalEmployeeList) {
+            employeeCache.put(e.getEmployeeId(), e);
         }
         try (Connection conn = DriverManager.getConnection(url);
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sqlAufgaben)) {
+             ResultSet rs = stmt.executeQuery(sqlTasks)) {
             while (rs.next()) {
-                Aufgabe aufgabe = new Aufgabe(
+                Task task = new Task(
                         rs.getInt("aufgabe_id"),
                         rs.getString("titel"),
                         rs.getString("beschreibung"),
                         rs.getInt("status") == 1);
-                ObservableList<Mitarbeiter> zugeordneteMitarbeiter = FXCollections.observableArrayList();
-                try (PreparedStatement pstmt = conn.prepareStatement(sqlZuordnung)) {
-                    pstmt.setInt(1, aufgabe.getAufgabenId());
+                ObservableList<Employee> assignedEmployees = FXCollections.observableArrayList();
+                try (PreparedStatement pstmt = conn.prepareStatement(sqlAssignment)) {
+                    pstmt.setInt(1, task.getTaskId());
                     ResultSet relRs = pstmt.executeQuery();
                     while (relRs.next()) {
-                        int mid = relRs.getInt("mitarbeiter_id");
-                        Mitarbeiter m = mitarbeiterCache.get(mid);
-                        if (m != null) {
-                            zugeordneteMitarbeiter.add(m);
+                        int eid = relRs.getInt("mitarbeiter_id");
+                        Employee e = employeeCache.get(eid);
+                        if (e != null) {
+                            assignedEmployees.add(e);
                         }
                     }
                 }
-                aufgabe.setMitarbeiterListe(zugeordneteMitarbeiter);
-                if (mitarbeiter == null) {
-                    aufgabenListe.add(aufgabe);
-                } else if (aufgabe.hatMitarbeiter(mitarbeiter)) {
-                    aufgabenListe.add(aufgabe);
+                task.setEmployeeList(assignedEmployees);
+                if (employee == null) {
+                    taskList.add(task);
+                } else if (task.hasEmployee(employee)) {
+                    taskList.add(task);
                 }
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        return aufgabenListe;
+        return taskList;
     }
 
     @Override
-    public ObservableList<Aufgabe> alleAufgabenLaden(ObservableList<Mitarbeiter> globaleMitarbeiterListe) {
-        // Gibt alle Aufgaben zurück (mitarbeiter==null)
-        return aufgabenLaden(null, globaleMitarbeiterListe);
+    public ObservableList<Task> loadAllTasks(ObservableList<Employee> globalEmployeeList) {
+        // Gibt alle Aufgaben zurück (employee==null)
+        return loadTasks(null, globalEmployeeList);
     }
 
     @Override
-    public void aufgabeSpeichern(Mitarbeiter mitarbeiter, Aufgabe aufgabe) {
-        String sqlAufgabe = "INSERT INTO aufgaben(titel, beschreibung, status) VALUES(?,?,?)";
-        String sqlZuordnung = "INSERT INTO mitarbeiter_aufgaben(mitarbeiter_id, aufgabe_id, zugewiesen_am) VALUES(?,?,?)";
+    public void saveTask(Employee employee, Task task) {
+        String sqlTask = "INSERT INTO aufgaben(titel, beschreibung, status) VALUES(?,?,?)";
+        String sqlAssignment = "INSERT INTO mitarbeiter_aufgaben(mitarbeiter_id, aufgabe_id, zugewiesen_am) VALUES(?,?,?)";
 
-        int aufgabeId = -1;
+        int taskId = -1;
         try (Connection conn = DriverManager.getConnection(url);
-             PreparedStatement pstmt = conn.prepareStatement(sqlAufgabe, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setString(1, aufgabe.getTitel());
-            pstmt.setString(2, aufgabe.getBeschreibung());
-            pstmt.setBoolean(3, aufgabe.isErledigt());
+             PreparedStatement pstmt = conn.prepareStatement(sqlTask, Statement.RETURN_GENERATED_KEYS)) {
+            pstmt.setString(1, task.getTitle());
+            pstmt.setString(2, task.getDescription());
+            pstmt.setBoolean(3, task.isDone());
             pstmt.executeUpdate();
             try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    aufgabeId = generatedKeys.getInt(1);
-                    aufgabe.setAufgabenId(aufgabeId);
-                    aufgabenMap.put(aufgabeId, aufgabe);
+                    taskId = generatedKeys.getInt(1);
+                    task.setTaskId(taskId);
+                    taskMap.put(taskId, task);
                 }
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
-        if (aufgabeId == -1) {
+        if (taskId == -1) {
             System.out.println("Fehler beim Einfügen der Aufgabe, ID konnte nicht ermittelt werden.");
             return;
         }
-        aufgabe.fuegeMitarbeiterHinzu(mitarbeiter);
+        task.addEmployee(employee);
         try (Connection conn = DriverManager.getConnection(url);
-             PreparedStatement pstmt = conn.prepareStatement(sqlZuordnung)) {
-            pstmt.setInt(1, mitarbeiter.getMitarbeiterId());
-            pstmt.setInt(2, aufgabe.getAufgabenId());
+             PreparedStatement pstmt = conn.prepareStatement(sqlAssignment)) {
+            pstmt.setInt(1, employee.getEmployeeId());
+            pstmt.setInt(2, task.getTaskId());
             pstmt.setDate(3, Date.valueOf(java.time.LocalDate.now()));
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -158,13 +158,13 @@ public class SQLStorage implements ISpeicherStrategie {
     }
 
     @Override
-    public void aufgabeStatusAenderung(Aufgabe aufgabe) {
+    public void updateTaskStatus(Task task) {
         String sql = "UPDATE aufgaben SET status = ? WHERE aufgabe_id = ?";
 
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, aufgabe.isErledigt() ? 1 : 0);
-            pstmt.setInt(2, aufgabe.getAufgabenId());
+            pstmt.setInt(1, task.isDone() ? 1 : 0);
+            pstmt.setInt(2, task.getTaskId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -172,24 +172,24 @@ public class SQLStorage implements ISpeicherStrategie {
     }
 
     @Override
-    public void aufgabeLöschen(Aufgabe aufgabe) {
-        aufgabenMap.remove(aufgabe.getAufgabenId());
-        if (aufgabe == null) {
+    public void deleteTask(Task task) {
+        taskMap.remove(task.getTaskId());
+        if (task == null) {
             System.out.println("Fehler: Die Aufgabe ist null und kann nicht gelöscht werden.");
             return;
         }
-        String sqlZuordnung = "DELETE FROM mitarbeiter_aufgaben WHERE aufgabe_id = ?";
-        String sqlAufgabe = "DELETE FROM aufgaben WHERE aufgabe_id = ?";
+        String sqlAssignment = "DELETE FROM mitarbeiter_aufgaben WHERE aufgabe_id = ?";
+        String sqlTask = "DELETE FROM aufgaben WHERE aufgabe_id = ?";
 
         try (Connection conn = DriverManager.getConnection(url)) {
             conn.createStatement().execute("PRAGMA foreign_keys = ON;");
-            try (PreparedStatement stmtZuordnung = conn.prepareStatement(sqlZuordnung)) {
-                stmtZuordnung.setInt(1, aufgabe.getAufgabenId());
-                stmtZuordnung.executeUpdate();
+            try (PreparedStatement stmtAssignment = conn.prepareStatement(sqlAssignment)) {
+                stmtAssignment.setInt(1, task.getTaskId());
+                stmtAssignment.executeUpdate();
             }
-            try (PreparedStatement stmtAufgabe = conn.prepareStatement(sqlAufgabe)) {
-                stmtAufgabe.setInt(1, aufgabe.getAufgabenId());
-                stmtAufgabe.executeUpdate();
+            try (PreparedStatement stmtTask = conn.prepareStatement(sqlTask)) {
+                stmtTask.setInt(1, task.getTaskId());
+                stmtTask.executeUpdate();
             }
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -197,14 +197,14 @@ public class SQLStorage implements ISpeicherStrategie {
     }
 
     @Override
-    public void aufgabeDatenÄndern(Aufgabe aufgabe) {
+    public void updateTaskData(Task task) {
         String sql = "UPDATE aufgaben SET titel = ?, beschreibung = ? WHERE aufgabe_id = ?";
 
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, aufgabe.getTitel());
-            pstmt.setString(2, aufgabe.getBeschreibung());
-            pstmt.setInt(3, aufgabe.getAufgabenId());
+            pstmt.setString(1, task.getTitle());
+            pstmt.setString(2, task.getDescription());
+            pstmt.setInt(3, task.getTaskId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
@@ -212,27 +212,18 @@ public class SQLStorage implements ISpeicherStrategie {
     }
 
     @Override
-    public void aufgabeEntfernen(Mitarbeiter mitarbeiter, Aufgabe aufgabe) {
-
+    public void removeTask(Employee employee, Task task) {
         String sql = "DELETE FROM mitarbeiter_aufgaben WHERE mitarbeiter_id = ? AND aufgabe_id = ?";
 
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setInt(1, mitarbeiter.getMitarbeiterId());
-            pstmt.setInt(2, aufgabe.getAufgabenId());
+            pstmt.setInt(1, employee.getEmployeeId());
+            pstmt.setInt(2, task.getTaskId());
             pstmt.executeUpdate();
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
 
-        aufgabe.getMitarbeiterListe().remove(mitarbeiter);
+        task.getEmployeeList().remove(employee);
     }
-
-
-    @Deprecated
-    public ObservableList<Aufgabe> aufgabenLaden(Mitarbeiter mitarbeiter) {
-        return FXCollections.observableArrayList();
-    }
-
-
 }
