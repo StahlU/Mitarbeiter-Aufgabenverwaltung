@@ -133,7 +133,8 @@ public static void fillTables(int numberOfEmployees, int numberOfTasks) {
     try (Connection conn = DriverManager.getConnection(URL)) {
         conn.setAutoCommit(false);
 
-        String mitarbeiterSql = "INSERT INTO mitarbeiter(name, surname) VALUES(?, ?)";
+
+        String mitarbeiterSql = "INSERT INTO mitarbeiter(vorname, nachname) VALUES(?, ?)";
         try (PreparedStatement mitarbeiterStmt = conn.prepareStatement(mitarbeiterSql)) {
             for (int i = 0; i < numberOfEmployees; i++) {
                 mitarbeiterStmt.setString(1, namen[random.nextInt(namen.length)]);
@@ -142,31 +143,33 @@ public static void fillTables(int numberOfEmployees, int numberOfTasks) {
             }
         }
 
-        String auftraegeSql = "INSERT INTO auftraege(title, description, status) VALUES(?, ?, ?)";
-        try (PreparedStatement auftraegeStmt = conn.prepareStatement(auftraegeSql)) {
+
+        String aufgabenSql = "INSERT INTO aufgaben(titel, beschreibung, status) VALUES(?, ?, ?)";
+        try (PreparedStatement aufgabenStmt = conn.prepareStatement(aufgabenSql)) {
             for (int i = 0; i < numberOfTasks; i++) {
-                auftraegeStmt.setString(1, aufgaben[random.nextInt(aufgaben.length)]);
-                auftraegeStmt.setString(2, "Beschreibung " + (i + 1));
-                auftraegeStmt.setInt(3, random.nextBoolean() ? 1 : 0); // Random status
-                auftraegeStmt.executeUpdate();
+                aufgabenStmt.setString(1, aufgaben[random.nextInt(aufgaben.length)]);
+                aufgabenStmt.setString(2, "Beschreibung " + (i + 1));
+                aufgabenStmt.setInt(3, random.nextBoolean() ? 1 : 0);
+                aufgabenStmt.executeUpdate();
             }
         }
 
-        String mitarbeiterAuftraegeSql = "INSERT INTO mitarbeiter_auftraege(mitarbeiter_id, auftrag_id, assigned_date) VALUES(?, ?, date('now'))";
-        try (PreparedStatement mitarbeiterAuftraegeStmt = conn.prepareStatement(mitarbeiterAuftraegeSql)) {
+        // Korrigierte Tabellennamen und Spaltennamen für Zuordnung
+        String mitarbeiterAufgabenSql = "INSERT INTO mitarbeiter_aufgaben(mitarbeiter_id, aufgabe_id, zugewiesen_am) VALUES(?, ?, date('now'))";
+        try (PreparedStatement mitarbeiterAufgabenStmt = conn.prepareStatement(mitarbeiterAufgabenSql)) {
             for (int employeeId = 1; employeeId <= numberOfEmployees; employeeId++) {
                 Set<Integer> assignedTasks = new HashSet<>();
-                int tasksToAssign = random.nextInt(numberOfTasks) + 1; // At least 1 task per employee
+                int tasksToAssign = random.nextInt(numberOfTasks) + 1;
                 for (int j = 0; j < tasksToAssign; j++) {
                     int taskId;
                     do {
                         taskId = random.nextInt(numberOfTasks) + 1;
-                    } while (assignedTasks.contains(taskId)); // Ensure unique tasks for the employee
+                    } while (assignedTasks.contains(taskId));
                     assignedTasks.add(taskId);
 
-                    mitarbeiterAuftraegeStmt.setInt(1, employeeId);
-                    mitarbeiterAuftraegeStmt.setInt(2, taskId);
-                    mitarbeiterAuftraegeStmt.executeUpdate();
+                    mitarbeiterAufgabenStmt.setInt(1, employeeId);
+                    mitarbeiterAufgabenStmt.setInt(2, taskId);
+                    mitarbeiterAufgabenStmt.executeUpdate();
                 }
             }
         }
@@ -180,7 +183,3 @@ public static void fillTables(int numberOfEmployees, int numberOfTasks) {
 
 
 }
-
-
-
-

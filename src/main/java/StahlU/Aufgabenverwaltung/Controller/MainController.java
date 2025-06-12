@@ -1,14 +1,12 @@
 package StahlU.Aufgabenverwaltung.Controller;
 
 import StahlU.Aufgabenverwaltung.Objekte.Aufgabe;
+import StahlU.Aufgabenverwaltung.Objekte.AufgabenFenster;
 import StahlU.Aufgabenverwaltung.Objekte.Mitarbeiter;
-import StahlU.Aufgabenverwaltung.Speichern.JsonBackup;
 import StahlU.Aufgabenverwaltung.Speichern.Kontext;
 import StahlU.Aufgabenverwaltung.Speichern.SQLStorage;
-
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -25,95 +23,81 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
-
+import javafx.stage.Stage;
 import java.util.Objects;
 
 public class MainController {
-    public TextField neuerMitarbeiternameField;
-    public TextField neuerMitarbeitersurnameField;
+    public TextField vornameFeld;
+    public TextField nachnameFeld;
+    public TextField suchfeldMitarbeiter;
+    public TextField titelFeld;
+    public TextField beschreibungFeld;
+    public Mitarbeiter ausgewaehlterMitarbeiter;
+    public ListView<Mitarbeiter> mitarbeiterListenAnsicht;
+    public ListView<Aufgabe> aufgabenListenAnsicht;
 
-    public TextField searchMitarbeiter;
-    public TextField titleTextField;
-    public TextField descriptionTextField;
-    public Mitarbeiter selectedMitarbeiter;
-
-    public ListView<Mitarbeiter> mitarbeiterListView;
-
-    public ListView<Aufgabe> aufgabenListView;
-
-    private final ObservableList<Mitarbeiter> mitarbeiterList = FXCollections.observableArrayList();
-    private final ObservableList<Mitarbeiter> mitarbeiterSearchList = FXCollections.observableArrayList();
+    private final ObservableList<Mitarbeiter> mitarbeiterListe = FXCollections.observableArrayList();
+    private final ObservableList<Mitarbeiter> mitarbeiterSuchListe = FXCollections.observableArrayList();
+    private final ObservableList<Aufgabe> alleAufgaben = FXCollections.observableArrayList();
     Kontext kontext = new Kontext();
 
-
-
-
-public void initialize() {
-
+    public void initialize() {
         kontext.setSpeicherStrategie(new SQLStorage());
-        mitarbeiterListView.setFixedCellSize(25);
+        mitarbeiterListenAnsicht.setFixedCellSize(25);
 
+        mitarbeiterListe.setAll(kontext.ladeMitarbeiter());
+        mitarbeiterListenAnsicht.setItems(mitarbeiterListe);
 
-        mitarbeiterList.setAll(kontext.mitarbeiterLadenAusführen());
-        mitarbeiterListView.setItems(mitarbeiterList);
+        alleAufgaben.setAll(kontext.ladeAlleAufgaben(mitarbeiterListe));
 
+        fortschrittAktualisieren();
+        mitarbeiterListenAnsicht.setOnMouseClicked(this::mitarbeiterGeklickt);
 
-        Platform.runLater(() -> {
-            mitarbeiterListView.getScene().getWindow().setOnCloseRequest(event -> {
-                JsonBackup.save(mitarbeiterList);
-                Platform.exit();
-            });
+        mitarbeiterListenAnsicht.setCellFactory(lv -> new ListCell<Mitarbeiter>() {
+            private final HBox hbox = new HBox(10);
+            private final Label nameLabel = new Label();
+            private final Region spacer = new Region();
+            private final ProgressBar fortschrittBalken = new ProgressBar();
+            private final Image iconLeer = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/StahlU/Aufgabenverwaltung/icons/icon_empty.png")));
+            private final Image iconTeilweise = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/StahlU/Aufgabenverwaltung/icons/icon_partial.png")));
+            private final Image iconFertig = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/StahlU/Aufgabenverwaltung/icons/icon_done.png")));
+            private final ImageView iconView = new ImageView();
+
+            {
+                hbox.setAlignment(Pos.CENTER_LEFT);
+                fortschrittBalken.setPrefWidth(100);
+                iconView.setFitWidth(20);
+                iconView.setFitHeight(20);
+                HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+                hbox.getChildren().addAll(nameLabel, spacer, fortschrittBalken, iconView);
+            }
+
+            @Override
+            protected void updateItem(Mitarbeiter mitarbeiter, boolean empty) {
+                super.updateItem(mitarbeiter, empty);
+                if (empty || mitarbeiter == null) {
+                    setGraphic(null);
+                } else {
+                    mitarbeiterListenAnsicht.setFixedCellSize(25);
+                    System.setProperty("java.util.logging.config.file", "logging.properties");
+                    nameLabel.setText(mitarbeiter.getMitarbeiterId() + " " + mitarbeiter.getVorname() + " " + mitarbeiter.getNachname());
+                    fortschrittBalken.progressProperty().unbind();
+                    fortschrittBalken.progressProperty().bind(mitarbeiter.fortschrittEigenschaft());
+
+                    double fortschritt = mitarbeiter.getFortschritt();
+                    if (fortschritt >= 1.0) {
+                        iconView.setImage(iconFertig);
+                    } else if (fortschritt > 0.0) {
+                        iconView.setImage(iconTeilweise);
+                    } else {
+                        iconView.setImage(iconLeer);
+                    }
+                    setGraphic(hbox);
+                }
+            }
         });
 
-        mitarbeiterListView.setOnMouseClicked(this::handleMitarbeiterClick);
-
-
-            mitarbeiterListView.setCellFactory(lv -> new ListCell<Mitarbeiter>() {
-                private final HBox hbox = new HBox(10);
-                private final Label nameLabel = new Label();
-                private final Region spacer = new Region();
-                private final ProgressBar progressBar = new ProgressBar();
-                private final Image iconEmpty = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/StahlU/Aufgabenverwaltung/icons/icon_empty.png")));
-                private final Image iconPartial = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/StahlU/Aufgabenverwaltung/icons/icon_partial.png")));
-                private final Image iconDone = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/StahlU/Aufgabenverwaltung/icons/icon_done.png")));
-
-                private final ImageView iconView = new ImageView();
-
-                {
-                    hbox.setAlignment(Pos.CENTER_LEFT);
-                    progressBar.setPrefWidth(100);
-                    iconView.setFitWidth(20);
-                    iconView.setFitHeight(20);
-                    HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
-                    hbox.getChildren().addAll(nameLabel, spacer, progressBar, iconView);
-                }
-
-                @Override
-                protected void updateItem(Mitarbeiter mitarbeiter, boolean empty) {
-                    super.updateItem(mitarbeiter, empty);
-                    if (empty || mitarbeiter == null) {
-                        setText(null);
-                        setGraphic(null);
-                    } else {
-                        nameLabel.setText(mitarbeiter.getEmployeeID()+" "+mitarbeiter.getName()+" "+mitarbeiter.getSurname());
-                        progressBar.progressProperty().unbind();
-                        progressBar.progressProperty().bind(mitarbeiter.fortschrittProperty());
-
-                        double fortschritt = mitarbeiter.getFortschritt();
-                        if (fortschritt >= 1.0) {
-                            iconView.setImage(iconDone);
-                        } else if (fortschritt > 0.0) {
-                            iconView.setImage(iconPartial);
-                        } else {
-                            iconView.setImage(iconEmpty);
-                        }
-
-                        setGraphic(hbox);
-                    }
-                }
-            });
-
-        aufgabenListView.setCellFactory(lv -> new ListCell<Aufgabe>() {
+        aufgabenListenAnsicht.setCellFactory(lv -> new ListCell<Aufgabe>() {
             @Override
             protected void updateItem(Aufgabe aufgabe, boolean empty) {
                 super.updateItem(aufgabe, empty);
@@ -121,7 +105,7 @@ public void initialize() {
                     setGraphic(null);
                     setStyle("");
                 } else {
-                    setMaxWidth(aufgabenListView.getWidth() - 40);
+                    setMaxWidth(aufgabenListenAnsicht.getWidth() - 40);
 
                     VBox vbox = new VBox(5);
                     vbox.setAlignment(Pos.CENTER_LEFT);
@@ -129,180 +113,227 @@ public void initialize() {
                     HBox hbox = new HBox(5);
                     hbox.setAlignment(Pos.CENTER_LEFT);
 
-                    CheckBox checkBox = new CheckBox(aufgabe.getTitle());
+                    CheckBox checkBox = new CheckBox(aufgabe.getTitel());
 
                     Region spacer = new Region();
                     spacer.setMaxWidth(Double.MAX_VALUE);
 
                     HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
 
-                    Button deleteButton = new Button("Löschen");
-                    deleteButton.setStyle("-fx-background-color: #ff4444; -fx-text-fill: white;");
+                    Button loeschenButton = new Button("Löschen");
+                    loeschenButton.setStyle("-fx-background-color: #ff4444; -fx-text-fill: white;");
 
-                    Label descriptionLabel = new Label(aufgabe.getDescription());
+                    Label beschreibungLabel = new Label(aufgabe.getBeschreibung());
+                    beschreibungLabel.setWrapText(true);
+                    beschreibungLabel.setMaxWidth(aufgabenListenAnsicht.getWidth() - 40);
 
-                    descriptionLabel.setWrapText(true);
-                    descriptionLabel.setMaxWidth(aufgabenListView.getWidth() - 40);
-
-                    checkBox.setSelected(aufgabe.getStatus());
+                    checkBox.setSelected(aufgabe.isErledigt());
                     checkBox.selectedProperty().addListener((obs, oldVal, newVal) -> {
-                        if (selectedMitarbeiter != null) {
-                            selectedMitarbeiter.aufgabeErledigt(aufgabe, newVal, kontext);
-                            mitarbeiterListView.refresh();
-                        }
+                        aufgabe.setStatus(newVal, kontext);
+                        fortschrittAktualisieren();
+                        mitarbeiterListenAnsicht.refresh();
                     });
 
-                    deleteButton.setOnAction(event -> {
-                        removeAufgabe(aufgabe);
-                        mitarbeiterListView.refresh();
+                    loeschenButton.setOnAction(event -> {
+                        aufgabeEntfernen(aufgabe);
+                        mitarbeiterListenAnsicht.refresh();
                     });
 
-                    hbox.getChildren().addAll(checkBox,spacer, deleteButton);
-                    vbox.getChildren().addAll(hbox, descriptionLabel);
+                    hbox.getChildren().addAll(checkBox, spacer, loeschenButton);
+                    vbox.getChildren().addAll(hbox, beschreibungLabel);
                     setGraphic(vbox);
 
                     ContextMenu contextMenu = new ContextMenu();
-                    MenuItem deleteItem = new MenuItem("Aufgabe löschen");
-                    MenuItem editItem = new MenuItem("Aufgabe bearbeiten");
+                    MenuItem loeschenItem = new MenuItem("Aufgabe löschen");
+                    MenuItem bearbeitenItem = new MenuItem("Aufgabe bearbeiten");
 
-                    deleteItem.setOnAction(e -> removeAufgabe(aufgabe));
-                    editItem.setOnAction(e -> updateAufgabe(aufgabe));
+                    loeschenItem.setOnAction(e -> aufgabeEntfernen(aufgabe));
+                    bearbeitenItem.setOnAction(e -> aufgabeBearbeiten(aufgabe));
 
-                    contextMenu.getItems().addAll(deleteItem, editItem);
+                    contextMenu.getItems().addAll(loeschenItem, bearbeitenItem);
                     setContextMenu(contextMenu);
                 }
             }
         });
 
-        neuerMitarbeiternameField.setOnKeyPressed(event -> {
+        vornameFeld.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
-                addMitarbeiter(new ActionEvent());
-                mitarbeiterListView.refresh();
+                mitarbeiterHinzufuegen(new ActionEvent());
+                mitarbeiterListenAnsicht.refresh();
             }
         });
-        neuerMitarbeitersurnameField.setOnKeyPressed(event -> {
+        nachnameFeld.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
-                addMitarbeiter(new ActionEvent());
-                mitarbeiterListView.refresh();
-            }
-        });
-
-        titleTextField.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                addAufgabe(new ActionEvent());
-                mitarbeiterListView.refresh();
-            }
-        });
-        descriptionTextField.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                addAufgabe(new ActionEvent());
-                mitarbeiterListView.refresh();
+                mitarbeiterHinzufuegen(new ActionEvent());
+                mitarbeiterListenAnsicht.refresh();
             }
         });
 
-
+        titelFeld.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                aufgabeHinzufuegen(new ActionEvent());
+                mitarbeiterListenAnsicht.refresh();
+            }
+        });
+        beschreibungFeld.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                aufgabeHinzufuegen(new ActionEvent());
+                mitarbeiterListenAnsicht.refresh();
+            }
+        });
     }
-
-
-    private void handleMitarbeiterClick(MouseEvent mouseEvent) {
-
-        selectedMitarbeiter = mitarbeiterListView.getSelectionModel().getSelectedItem();
-
-        if (selectedMitarbeiter != null) {
-
-            ObservableList<Aufgabe> aufgaben = kontext.aufgabenLadenAusführen(selectedMitarbeiter);
-            aufgabenListView.setItems(aufgaben);
-            aufgabenListView.setPlaceholder(new Label("Keine Aufgaben für diesen Mitarbeiter"));
-            aufgabenListView.getSelectionModel().clearSelection();
-
-
-                if (aufgabenListView.getItems() != null) {
-                    aufgabenListView.setItems(aufgaben);
-                } else {
-                    aufgabenListView.setItems(null);
-                }
-
-        }
-    }
-
-    private Timeline searchDelay;
 
     @FXML
-    public void search(KeyEvent actionEvent) {
-        if (searchDelay != null) {
-            searchDelay.stop();
+    public void aufgabeHinzufuegen(ActionEvent actionEvent) {
+        if (titelFeld.getText().isEmpty() || beschreibungFeld.getText().isEmpty()) {
+            return;
+        }
+        if (ausgewaehlterMitarbeiter == null) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Keine Auswahl");
+            alert.setHeaderText("Bitte wählen Sie einen Mitarbeiter aus, um eine Aufgabe hinzuzufügen.");
+            alert.showAndWait();
+            return;
+        }
+        String titel = this.titelFeld.getText();
+        String beschreibung = this.beschreibungFeld.getText();
+
+        Aufgabe neueAufgabe = new Aufgabe(titel, beschreibung);
+        neueAufgabe.fuegeMitarbeiterHinzu(ausgewaehlterMitarbeiter);
+        kontext.speichereAufgabe(ausgewaehlterMitarbeiter, titel, beschreibung);
+
+        alleAufgaben.setAll(kontext.ladeAlleAufgaben(mitarbeiterListe));
+
+        this.titelFeld.clear();
+        this.beschreibungFeld.clear();
+        mitarbeiterListenAnsicht.refresh();
+
+        mitarbeiterGeklickt(null);
+        fortschrittAktualisieren();
+    }
+
+    public void aufgabeEntfernen(Aufgabe aufgabe) {
+        if (ausgewaehlterMitarbeiter != null) {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Aufgabe löschen");
+            alert.setHeaderText("Sind Sie sicher?");
+            alert.setContentText("Möchten Sie die Aufgabe wirklich löschen?");
+            ButtonType result = alert.showAndWait().orElse(ButtonType.CANCEL);
+            if (result != ButtonType.OK) {
+                return;
+            }
+            aufgabe.entferneMitarbeiter(ausgewaehlterMitarbeiter);
+            kontext.loescheAufgabe(ausgewaehlterMitarbeiter, aufgabe);
+
+            alleAufgaben.setAll(kontext.ladeAlleAufgaben(mitarbeiterListe));
+            mitarbeiterGeklickt(null);
+            mitarbeiterListenAnsicht.refresh();
+            fortschrittAktualisieren();
+        }
+    }
+
+    private void fortschrittAktualisieren() {
+        for (Mitarbeiter mitarbeiter : mitarbeiterListe) {
+            long gesamt = alleAufgaben.stream().filter(a -> a.hatMitarbeiter(mitarbeiter)).count();
+            long erledigt = alleAufgaben.stream().filter(a -> a.hatMitarbeiter(mitarbeiter) && a.isErledigt()).count();
+            double fortschritt = (gesamt == 0) ? 0.0 : (double) erledigt / gesamt;
+            mitarbeiter.setFortschritt(fortschritt);
+        }
+    }
+
+    private void mitarbeiterGeklickt(MouseEvent mouseEvent) {
+        ausgewaehlterMitarbeiter = mitarbeiterListenAnsicht.getSelectionModel().getSelectedItem();
+        if (ausgewaehlterMitarbeiter != null) {
+            ObservableList<Aufgabe> aufgaben = FXCollections.observableArrayList();
+            for (Aufgabe aufgabe : alleAufgaben) {
+                if (aufgabe.hatMitarbeiter(ausgewaehlterMitarbeiter)) {
+                    aufgaben.add(aufgabe);
+                }
+            }
+            aufgabenListenAnsicht.setItems(aufgaben);
+            aufgabenListenAnsicht.setPlaceholder(new Label("Keine Aufgaben für diesen Mitarbeiter"));
+            aufgabenListenAnsicht.getSelectionModel().clearSelection();
+        }
+    }
+
+    private Timeline suchVerzoegerung;
+
+    @FXML
+    public void mitarbeiterSuchen(KeyEvent actionEvent) {
+        if (suchVerzoegerung != null) {
+            suchVerzoegerung.stop();
         }
 
-        searchDelay = new Timeline(new KeyFrame(javafx.util.Duration.millis(500), event -> {
-            mitarbeiterSearchList.clear();
-            aufgabenListView.setItems(null);
+        suchVerzoegerung = new Timeline(new KeyFrame(javafx.util.Duration.millis(500), event -> {
+            mitarbeiterSuchListe.clear();
+            aufgabenListenAnsicht.setItems(null);
 
-
-            mitarbeiterSearchList.setAll(
-                mitarbeiterList.stream()
-                    .filter(mitarbeiter -> (mitarbeiter.getEmployeeID() + " " + mitarbeiter.getName() + " " + mitarbeiter.getSurname())
+            mitarbeiterSuchListe.setAll(
+                mitarbeiterListe.stream()
+                    .filter(mitarbeiter -> (mitarbeiter.getMitarbeiterId() + " " + mitarbeiter.getVorname() + " " + mitarbeiter.getNachname())
                         .toLowerCase()
-                        .contains(searchMitarbeiter.getText().toLowerCase())
+                        .contains(suchfeldMitarbeiter.getText().toLowerCase())
                     ).toList()
             );
 
-            if (mitarbeiterSearchList.isEmpty()) {
-                mitarbeiterListView.setItems(null);
+            if (mitarbeiterSuchListe.isEmpty()) {
+                mitarbeiterListenAnsicht.setItems(null);
             } else {
-                mitarbeiterListView.setItems(mitarbeiterSearchList);
-                mitarbeiterListView.setPlaceholder(new Label("Keine Mitarbeiter gefunden"));
+                mitarbeiterListenAnsicht.setItems(mitarbeiterSuchListe);
+                mitarbeiterListenAnsicht.setPlaceholder(new Label("Keine Mitarbeiter gefunden"));
             }
         }));
 
-        searchDelay.setCycleCount(1);
-        searchDelay.play();
+        suchVerzoegerung.setCycleCount(1);
+        suchVerzoegerung.play();
     }
 
     @FXML
-    public void addMitarbeiter(ActionEvent actionEvent) {
-        if (neuerMitarbeiternameField.getText().isEmpty() || neuerMitarbeitersurnameField.getText().isEmpty()) {
+    public void mitarbeiterHinzufuegen(ActionEvent actionEvent) {
+        if (vornameFeld.getText().isEmpty() || nachnameFeld.getText().isEmpty()) {
             return;
         }
 
-        String name = neuerMitarbeiternameField.getText();
-        String surname = neuerMitarbeitersurnameField.getText();
+        String vorname = vornameFeld.getText();
+        String nachname = nachnameFeld.getText();
 
-        boolean exists = mitarbeiterList.stream()
-            .anyMatch(m -> m.getName().equalsIgnoreCase(name) && m.getSurname().equalsIgnoreCase(surname));
+        boolean existiert = mitarbeiterListe.stream()
+            .anyMatch(m -> m.getVorname().equalsIgnoreCase(vorname) && m.getNachname().equalsIgnoreCase(nachname));
 
-        if (exists) {
+        if (existiert) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("Fehler!");
             alert.setHeaderText("Ein Mitarbeiter mit diesem Namen existiert bereits.");
             alert.setContentText("Möchten Sie den Mitarbeiter trotzdem hinzufügen?");
-
 
             if (alert.showAndWait().orElse(ButtonType.CANCEL) != ButtonType.OK) {
                 return;
             }
         }
 
+        mitarbeiterListe.add(kontext.speichereMitarbeiter(vorname, nachname));
+        mitarbeiterListe.setAll(kontext.ladeMitarbeiter());
+        mitarbeiterListenAnsicht.setItems(mitarbeiterListe);
 
-        mitarbeiterList.add(kontext.mitarbeiterSpeichernAusführen(name, surname));
-        mitarbeiterList.setAll(kontext.mitarbeiterLadenAusführen());
-        mitarbeiterListView.setItems(mitarbeiterList);
-        mitarbeiterListView.refresh();
+        alleAufgaben.setAll(kontext.ladeAlleAufgaben(mitarbeiterListe));
+        mitarbeiterListenAnsicht.refresh();
 
-        if (!mitarbeiterList.isEmpty()) {
-            mitarbeiterListView.getSelectionModel().selectLast();
-            selectedMitarbeiter = mitarbeiterListView.getSelectionModel().getSelectedItem();
-            mitarbeiterListView.requestFocus();
+        if (!mitarbeiterListe.isEmpty()) {
+            mitarbeiterListenAnsicht.getSelectionModel().selectLast();
+            ausgewaehlterMitarbeiter = mitarbeiterListenAnsicht.getSelectionModel().getSelectedItem();
+            mitarbeiterListenAnsicht.requestFocus();
         }
 
-        searchMitarbeiter.clear();
-        neuerMitarbeiternameField.clear();
-        neuerMitarbeitersurnameField.clear();
-        aufgabenListView.setItems(null);
+        suchfeldMitarbeiter.clear();
+        vornameFeld.clear();
+        nachnameFeld.clear();
+        aufgabenListenAnsicht.setItems(null);
+        fortschrittAktualisieren();
     }
 
     @FXML
-    public void removeMitarbeiter(ActionEvent actionEvent) {
-        if (selectedMitarbeiter == null) {
+    public void mitarbeiterEntfernen(ActionEvent actionEvent) {
+        if (ausgewaehlterMitarbeiter == null) {
             return;
         }
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -315,68 +346,15 @@ public void initialize() {
             return;
         }
 
-        kontext.mitarbeiterLöschenAusführen(selectedMitarbeiter);
-        mitarbeiterList.remove(selectedMitarbeiter);
-        aufgabenListView.setItems(null);
-        mitarbeiterListView.refresh();
+        kontext.loescheMitarbeiter(ausgewaehlterMitarbeiter);
+        mitarbeiterListe.remove(ausgewaehlterMitarbeiter);
+        mitarbeiterListenAnsicht.setItems(mitarbeiterListe);
 
-
+        aufgabenListenAnsicht.setItems(null);
+        mitarbeiterListenAnsicht.refresh();
     }
 
-    @FXML
-    public void addAufgabe(ActionEvent actionEvent) {
-
-        if (titleTextField.getText().isEmpty() || descriptionTextField.getText().isEmpty()) {
-            return;
-        }
-
-        if (selectedMitarbeiter == null) {
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Keine Auswahl");
-            alert.setHeaderText("Bitte wählen Sie einen Mitarbeiter aus, um eine Aufgabe hinzuzufügen.");
-            alert.showAndWait();
-            return;
-        }
-
-        String titleText = this.titleTextField.getText();
-        String titledescription = this.descriptionTextField.getText();
-
-        kontext.aufgabeSpeichernAusführen(selectedMitarbeiter,titleText,titledescription);
-        this.titleTextField.clear();
-        this.descriptionTextField.clear();
-        mitarbeiterListView.refresh();
-
-        ObservableList<Aufgabe> aufgaben = kontext.aufgabenLadenAusführen(selectedMitarbeiter);
-        aufgabenListView.setItems(aufgaben);
-        mitarbeiterListView.requestFocus();
-
-    }
-
-    public void removeAufgabe(Aufgabe aufgabe) {
-
-        if (selectedMitarbeiter != null) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Aufgabe löschen");
-            alert.setHeaderText("Sind Sie sicher?");
-            alert.setContentText("Möchten Sie die Aufgabe wirklich löschen?");
-
-            ButtonType result = alert.showAndWait().orElse(ButtonType.CANCEL);
-            if (result != ButtonType.OK) {
-                return;
-            }
-
-            kontext.aufgabeLöschenAusführen(selectedMitarbeiter, aufgabe);
-            mitarbeiterListView.getItems().forEach(mitarbeiter ->{
-                if(mitarbeiter.hatAufgabe(aufgabe)) {
-                    mitarbeiter.removeAufgabe(aufgabe);
-                }});
-
-            aufgabenListView.getItems().remove(aufgabe);
-            mitarbeiterListView.refresh();
-        }
-    }
-
-    public void updateAufgabe(Aufgabe aufgabe) {
+    public void aufgabeBearbeiten(Aufgabe aufgabe) {
         if (aufgabe == null) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Keine Auswahl");
@@ -390,11 +368,11 @@ public void initialize() {
         dialog.setTitle("Aufgabe bearbeiten");
         dialog.setHeaderText("Bearbeiten Sie die ausgewählte Aufgabe");
 
-        ButtonType saveButtonType = new ButtonType("Speichern", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButtonType, ButtonType.CANCEL);
+        ButtonType speichernButton = new ButtonType("Speichern", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(speichernButton, ButtonType.CANCEL);
 
-        TextField titleField = new TextField(aufgabe.getTitle());
-        TextArea descriptionField = new TextArea(aufgabe.getDescription());
+        TextField titelFeldDialog = new TextField(aufgabe.getTitel());
+        TextArea beschreibungFeldDialog = new TextArea(aufgabe.getBeschreibung());
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -402,31 +380,26 @@ public void initialize() {
         grid.setPadding(new Insets(20, 150, 10, 10));
 
         grid.add(new Label("Titel:"), 0, 0);
-        grid.add(titleField, 1, 0);
+        grid.add(titelFeldDialog, 1, 0);
         grid.add(new Label("Beschreibung:"), 0, 1);
-        grid.add(descriptionField, 1, 1);
+        grid.add(beschreibungFeldDialog, 1, 1);
 
         dialog.getDialogPane().setContent(grid);
 
-
         dialog.setResultConverter(dialogButton -> {
-            if (dialogButton == saveButtonType) {
-                aufgabe.setBeschreibung(descriptionField.getText());
-                aufgabe.setTitle(titleField.getText());
-                System.out.println("speichern");
+            if (dialogButton == speichernButton) {
+                aufgabe.setBeschreibung(beschreibungFeldDialog.getText());
+                aufgabe.setTitel(titelFeldDialog.getText());
                 return aufgabe;
             }
             return null;
         });
 
-        dialog.showAndWait().ifPresent(updatedAufgabe -> {
-            System.out.println("Aufgabe aktualisiert: " + updatedAufgabe.getTitle()+" " + updatedAufgabe.getDescription());
-            kontext.aufgabeDatenÄndernAusführen(aufgabe);
-            aufgabenListView.refresh();
+        dialog.showAndWait().ifPresent(aktualisierteAufgabe -> {
+            kontext.aktualisiereAufgabeDaten(aufgabe);
+            aufgabenListenAnsicht.refresh();
         });
     }
 
+
 }
-
-
-

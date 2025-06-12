@@ -7,66 +7,67 @@ import javafx.collections.ObservableList;
 public class Kontext {
 
     private ISpeicherStrategie speicherStrategie;
-    public void setSpeicherStrategie(ISpeicherStrategie speicherStrategie){
+
+    public void setSpeicherStrategie(ISpeicherStrategie speicherStrategie) {
         this.speicherStrategie = speicherStrategie;
     }
 
-
-    public ObservableList<Mitarbeiter> mitarbeiterLadenAusführen() {
+    public ObservableList<Mitarbeiter> ladeMitarbeiter() {
         return this.speicherStrategie.mitarbeiterLaden();
     }
 
-
-    public Mitarbeiter mitarbeiterSpeichernAusführen(String name, String surname) {
-        Mitarbeiter mitarbeiter = new Mitarbeiter(-1,name, surname);
-        this.speicherStrategie.mitarbeiterSpeichern(name,surname);
+    public Mitarbeiter speichereMitarbeiter(String vorname, String nachname) {
+        Mitarbeiter mitarbeiter = new Mitarbeiter(-1, vorname, nachname);
+        this.speicherStrategie.mitarbeiterSpeichern(vorname, nachname);
+        speichereJsonAsync();
         return mitarbeiter;
     }
 
-    public void mitarbeiterLöschenAusführen(Mitarbeiter mitarbeiter) {
+    public void loescheMitarbeiter(Mitarbeiter mitarbeiter) {
         this.speicherStrategie.mitarbeiterLöschen(mitarbeiter);
-
+        speichereJsonAsync();
     }
 
-
-    public ObservableList<Aufgabe> aufgabenLadenAusführen(Mitarbeiter mitarbeiter) {
-        mitarbeiter.getAufgaben().clear();
-        ObservableList<Aufgabe> liste = this.speicherStrategie.aufgabenLaden(mitarbeiter);
-        for (Aufgabe aufgabe : liste) {
-            mitarbeiter.addAufgabe(aufgabe);
-        }
-        return liste;
+    public ObservableList<Aufgabe> ladeAufgaben(Mitarbeiter mitarbeiter, ObservableList<Mitarbeiter> globaleMitarbeiterListe) {
+        return this.speicherStrategie.aufgabenLaden(mitarbeiter, globaleMitarbeiterListe);
     }
 
+    public ObservableList<Aufgabe> ladeAlleAufgaben(ObservableList<Mitarbeiter> globaleMitarbeiterListe) {
+        return this.speicherStrategie.alleAufgabenLaden(globaleMitarbeiterListe);
+    }
 
-    public void aufgabeSpeichernAusführen(Mitarbeiter mitarbeiter, String titleText, String titledescription) {
-        Aufgabe aufgabe = new Aufgabe(titleText,titledescription);
-        mitarbeiter.addAufgabe(aufgabe);
+    public void speichereAufgabe(Mitarbeiter mitarbeiter, String titel, String beschreibung) {
+        Aufgabe aufgabe = new Aufgabe(titel, beschreibung);
+        aufgabe.fuegeMitarbeiterHinzu(mitarbeiter);
         this.speicherStrategie.aufgabeSpeichern(mitarbeiter, aufgabe);
-
+        speichereJsonAsync();
     }
-    public void aufgabeStatusAenderungAusführen(Aufgabe aufgabe) {
+
+    public void aktualisiereAufgabenStatus(Aufgabe aufgabe) {
         this.speicherStrategie.aufgabeStatusAenderung(aufgabe);
-
+        speichereJsonAsync();
     }
 
-
-    public void aufgabeLöschenAusführen(Mitarbeiter mitarbeiter, Aufgabe aufgabe) {
-        mitarbeiter.removeAufgabe(aufgabe);
-        this.speicherStrategie.aufgabeLöschen(aufgabe);
-
+    public void loescheAufgabe(Mitarbeiter mitarbeiter, Aufgabe aufgabe) {
+        this.speicherStrategie.aufgabeEntfernen(mitarbeiter, aufgabe);
+        if (aufgabe.getMitarbeiterListe().isEmpty()) {
+            this.speicherStrategie.aufgabeLöschen(aufgabe);
+        }
+        speichereJsonAsync();
     }
 
-
-    public void saveToJson() {
-        ObservableList<Mitarbeiter> mitarbeiterList = mitarbeiterLadenAusführen();
-        JsonBackup.save(mitarbeiterList);
-
+    public void speichereJson() {
+        ObservableList<Mitarbeiter> mitarbeiterListe = ladeMitarbeiter();
+        ObservableList<Aufgabe> aufgabenListe = ladeAlleAufgaben(mitarbeiterListe);
+        JsonBackup.save(aufgabenListe);
     }
 
-public void aufgabeDatenÄndernAusführen(Aufgabe aufgabe) {
-    this.speicherStrategie.aufgabeDatenÄndern(aufgabe);
-}
+    public void speichereJsonAsync() {
+        new Thread(this::speichereJson).start();
+    }
 
-
+    public void aktualisiereAufgabeDaten(Aufgabe aufgabe) {
+        this.speicherStrategie.aufgabeDatenÄndern(aufgabe);
+        speichereJsonAsync();
+    }
 }

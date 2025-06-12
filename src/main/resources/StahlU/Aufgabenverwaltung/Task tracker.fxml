@@ -24,42 +24,41 @@
                         <HBox.margin>
                             <Insets />
                         </HBox.margin>
-                  <padding>
-                     <Insets right="-50.0" />
-                  </padding>
+                        <padding>
+                            <Insets right="-50.0" />
+                        </padding>
                     </Label>
-                    <TextField fx:id="searchMitarbeiter" maxWidth="1.7976931348623157E308" onKeyTyped="#search" promptText="Suche..." HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="suchfeldMitarbeiter" maxWidth="1.7976931348623157E308" onKeyTyped="#mitarbeiterSuchen" promptText="Suche..." HBox.hgrow="ALWAYS" />
                 </HBox>
-                <ListView fx:id="mitarbeiterListView" maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS">
-               <rotationAxis>
-                  <Point3D />
-               </rotationAxis></ListView>
+                <ListView fx:id="mitarbeiterListenAnsicht" maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                    <rotationAxis>
+                        <Point3D />
+                    </rotationAxis>
+                </ListView>
                 <HBox spacing="5">
-                    <TextField fx:id="neuerMitarbeiternameField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Vorname" HBox.hgrow="ALWAYS" />
-               <TextField fx:id="neuerMitarbeitersurnameField" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Nachname" HBox.hgrow="ALWAYS" />
-                    <Button maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" onAction="#addMitarbeiter" prefHeight="25.0" prefWidth="25.0" text="+" HBox.hgrow="ALWAYS" />
-                    <Button maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" onAction="#removeMitarbeiter" prefHeight="25.0" prefWidth="25.0" text="-" HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="vornameFeld" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Vorname" HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="nachnameFeld" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" promptText="Nachname" HBox.hgrow="ALWAYS" />
+                    <Button maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" onAction="#mitarbeiterHinzufuegen" prefHeight="25.0" prefWidth="25.0" text="+" HBox.hgrow="ALWAYS" />
+                    <Button maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" onAction="#mitarbeiterEntfernen" prefHeight="25.0" prefWidth="25.0" text="-" HBox.hgrow="ALWAYS" />
                 </HBox>
             </VBox>
 
             <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="5" HBox.hgrow="ALWAYS">
-            <HBox maxWidth="1.7976931348623157E308">
-               <VBox.margin>
-                  <Insets />
-               </VBox.margin>
-               <children>
-                      <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Aufgaben:" HBox.hgrow="ALWAYS" />
-               </children>
-            </HBox>
-                <ListView fx:id="aufgabenListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
+                <HBox maxWidth="1.7976931348623157E308">
+                    <VBox.margin>
+                        <Insets />
+                    </VBox.margin>
+                    <children>
+                        <Label maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" text="Aufgaben:" HBox.hgrow="ALWAYS" />
+                    </children>
+                </HBox>
+                <ListView fx:id="aufgabenListenAnsicht" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
                 <HBox spacing="5">
-                    <TextField fx:id="titleTextField" promptText="Neue Aufgabe" />
-               <TextField fx:id="descriptionTextField" promptText="Beschreibung" />
-                    <Button maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" onAction="#addAufgabe" prefHeight="25.0" prefWidth="25.0" text="+" HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="titelFeld" promptText="Neue Aufgabe" />
+                    <TextField fx:id="beschreibungFeld" promptText="Beschreibung" />
+                    <Button maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="-Infinity" minWidth="-Infinity" onAction="#aufgabeHinzufuegen" prefHeight="25.0" prefWidth="25.0" text="+" HBox.hgrow="ALWAYS" />
                 </HBox>
             </VBox>
         </HBox>
-
-
     </VBox>
 </VBox>

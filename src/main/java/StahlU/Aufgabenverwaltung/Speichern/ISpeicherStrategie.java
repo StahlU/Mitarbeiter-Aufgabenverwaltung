@@ -5,19 +5,18 @@ import StahlU.Aufgabenverwaltung.Objekte.Mitarbeiter;
 import javafx.collections.ObservableList;
 
 public interface ISpeicherStrategie {
-    public abstract ObservableList<Mitarbeiter> mitarbeiterLaden();
-    public abstract void                        mitarbeiterSpeichern(String name,String Surname);
-    public abstract void                        mitarbeiterLöschen(Mitarbeiter mitarbeiter);
+    ObservableList<Mitarbeiter> mitarbeiterLaden();
+    void mitarbeiterSpeichern(String vorname, String nachname);
+    void mitarbeiterLöschen(Mitarbeiter mitarbeiter);
 
+    ObservableList<Aufgabe> aufgabenLaden(Mitarbeiter mitarbeiter, ObservableList<Mitarbeiter> globaleMitarbeiterListe);
 
-    public abstract ObservableList<Aufgabe>     aufgabenLaden(Mitarbeiter mitarbeiter);
-    public abstract void                        aufgabeSpeichern(Mitarbeiter mitarbeiter, Aufgabe aufgabe);
+    ObservableList<Aufgabe> alleAufgabenLaden(ObservableList<Mitarbeiter> globaleMitarbeiterListe);
 
-    public abstract void                        aufgabeStatusAenderung(Aufgabe aufgabe);
+    void aufgabeSpeichern(Mitarbeiter mitarbeiter, Aufgabe aufgabe);
+    void aufgabeStatusAenderung(Aufgabe aufgabe);
+    void aufgabeLöschen(Aufgabe aufgabe);
+    void aufgabeDatenÄndern(Aufgabe aufgabe);
 
-    public abstract void                        aufgabeLöschen(Aufgabe aufgabe);
-
-    public abstract void                        aufgabeDatenÄndern(Aufgabe aufgabe);
-
-
+    void aufgabeEntfernen(Mitarbeiter mitarbeiter, Aufgabe aufgabe);
 }

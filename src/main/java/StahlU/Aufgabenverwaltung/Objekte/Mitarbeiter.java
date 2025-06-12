@@ -1,140 +1,86 @@
 package StahlU.Aufgabenverwaltung.Objekte;
 
-import StahlU.Aufgabenverwaltung.Speichern.Kontext;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.SimpleDoubleProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
 
 public class Mitarbeiter {
-private int employeeID;
-private String name;
-private String surname;
+    private int mitarbeiterId;
+    private String vorname;
+    private String nachname;
 
+    private transient SimpleStringProperty vornameEigenschaft;
+    private transient SimpleDoubleProperty fortschrittEigenschaft;
 
-private ObservableList<Aufgabe> aufgaben;
-private transient SimpleStringProperty nameProperty;
-private transient SimpleDoubleProperty fortschrittProperty;
-
-public Mitarbeiter(int id, String name, String surname) {
-    this.employeeID = id;
-    this.name = name;
-    this.surname = surname;
-
-    this.aufgaben = FXCollections.observableArrayList();
-    this.nameProperty = new SimpleStringProperty(name);
-    this.fortschrittProperty = new SimpleDoubleProperty(0.0);
-
-}
-
-public int getEmployeeID() {
-    return employeeID;
-}
-
-
-public String getName() {
-
-    return name;
-}
-
-public String getSurname() {
-    return surname;
-}
-
-public SimpleStringProperty nameProperty() {
-
-    if (nameProperty == null) {
-        nameProperty = new SimpleStringProperty(name);
+    public Mitarbeiter(int id, String vorname, String nachname) {
+        this.mitarbeiterId = id;
+        this.vorname = vorname;
+        this.nachname = nachname;
+        this.vornameEigenschaft = new SimpleStringProperty(vorname);
+        this.fortschrittEigenschaft = new SimpleDoubleProperty(0.0);
     }
-    return nameProperty;
-}
 
-public ObservableList<Aufgabe> getAufgaben() {
-
-    return aufgaben;
-
-}
-
-public double getFortschritt() {
-
-    if (fortschrittProperty == null) {
-        fortschrittProperty = new SimpleDoubleProperty(0.0);
+    public int getMitarbeiterId() {
+        return mitarbeiterId;
     }
-    return fortschrittProperty.get();
-}
 
-
-
-public SimpleDoubleProperty fortschrittProperty() {
-
-    if (fortschrittProperty == null) {
-        fortschrittProperty = new SimpleDoubleProperty(0.0);
+    public String getVorname() {
+        return vorname;
     }
-    return fortschrittProperty;
-}
 
-public void addAufgabe(Aufgabe aufgabe) {
+    public String getNachname() {
+        return nachname;
+    }
 
-    aufgaben.add(aufgabe);
-    aufgabe.statusProperty().addListener((obs, oldVal, newVal) -> {
-        updateFortschritt();
-    });
-    updateFortschritt();
-}
-
-public void removeAufgabe(Aufgabe aufgabe) {
-
-    aufgaben.remove(aufgabe);
-    updateFortschritt();
-}
-
-public void aufgabeErledigt(Aufgabe aufgabe, boolean erledigt, Kontext kontextDaten) {
-
-    aufgabe.setStatus(erledigt, kontextDaten);
-    updateFortschritt();
-}
-
-
-public void updateFortschritt() {
-    if (aufgaben.isEmpty()) {
-        if (fortschrittProperty != null) {
-            fortschrittProperty.set(0);
+    public SimpleStringProperty vornameEigenschaft() {
+        if (vornameEigenschaft == null) {
+            vornameEigenschaft = new SimpleStringProperty(vorname);
         }
-        return;
+        return vornameEigenschaft;
     }
 
-    long erledigteAufgaben = aufgaben.stream()
-        .filter(Aufgabe::getStatus)
-        .count();
+    public double getFortschritt() {
+        if (fortschrittEigenschaft == null) {
+            fortschrittEigenschaft = new SimpleDoubleProperty(0.0);
+        }
+        return fortschrittEigenschaft.get();
+    }
 
-    double fortschritt = (double) erledigteAufgaben / aufgaben.size();
+    public SimpleDoubleProperty fortschrittEigenschaft() {
+        if (fortschrittEigenschaft == null) {
+            fortschrittEigenschaft = new SimpleDoubleProperty(0.0);
+        }
+        return fortschrittEigenschaft;
+    }
 
-    if (fortschrittProperty != null) {
-        fortschrittProperty.set(fortschritt);
+    public void setFortschritt(double fortschritt) {
+        if (fortschrittEigenschaft == null) {
+            fortschrittEigenschaft = new SimpleDoubleProperty(0.0);
+        }
+        fortschrittEigenschaft.set(fortschritt);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Mitarbeiter that = (Mitarbeiter) obj;
+        return mitarbeiterId == that.mitarbeiterId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.hashCode(mitarbeiterId);
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Mitarbeiter{");
+        sb.append("mitarbeiterId=").append(mitarbeiterId);
+        sb.append(", vorname='").append(vorname).append('\'');
+        sb.append(", nachname='").append(nachname).append('\'');
+        sb.append(", vornameEigenschaft=").append(vornameEigenschaft);
+        sb.append(", fortschrittEigenschaft=").append(fortschrittEigenschaft);
+        sb.append('}');
+        return sb.toString();
     }
 }
-
-@Override
-public String toString() {
-
-    final StringBuilder sb = new StringBuilder("Mitarbeiter{");
-    sb.append("employeeID=").append(employeeID);
-    sb.append(", name='").append(name).append('\'');
-    sb.append(", surname='").append(surname).append('\'');
-    sb.append(", aufgaben=").append(aufgaben);
-    sb.append(", nameProperty=").append(nameProperty);
-    sb.append(", fortschrittProperty=").append(fortschrittProperty);
-    sb.append('}');
-    return sb.toString();
-}
-
-public boolean hatAufgabe(Aufgabe aufgabe) {
-    if (aufgaben.contains(aufgabe)) {
-        return true;
-    }
-    return false;
-    }
-}
-
-
