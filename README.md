@@ -19,10 +19,9 @@ Die **Mitarbeiter-Aufgabenverwaltung** ist eine Softwarelösung zur effizienten 
 - Einzelne Einträge (Mitarbeiter/Aufgaben) bearbeiten
 - Aufgabenliste anzeigen und neue Aufgaben ohne Mitarbeiter anlegen
 - Aufgabenliste besser filtern und sortieren können, z. B. nach Status oder Priorität
-- Prioritäten für Aufgaben festlegen
-- Datum und Uhrzeit für Aufgaben hinzufügen
 - Json-Format für Datenspeicherung austauschen, weil es nicht performant genug ist
 - Backup-Funktion (Laden und Speichern) implementieren
 - Neue Features (z. B. Priorisierung von Aufgaben, Deadlines hinzufügen)
+- Datum und Uhrzeit für Aufgaben hinzufügen
 - Verbesserungen an der Benutzeroberfläche
 - Automatisierte Berichte oder Statistiken# Mitarbeiter-Aufgabenverwaltung
