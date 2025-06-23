@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox maxWidth="741.0" minHeight="-Infinity" minWidth="-Infinity" prefHeight="744.0" prefWidth="621.0" xmlns="http://javafx.com/javafx/17.0.6" xmlns:fx="http://javafx.com/fxml/1" fx:controller="StahlU.Aufgabenverwaltung.Controller.NewTaskController">
+   <children>
+      <HBox maxWidth="1.7976931348623157E308">
+         <children>
+            <Region maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+            <Label style="-fx-font-size: 24px; -fx-font-weight: bold;" text="Neue Aufgabe" textAlignment="CENTER" />
+            <Region maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+         </children>
+         <VBox.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </VBox.margin>
+      </HBox>
+      <HBox maxWidth="1.7976931348623157E308">
+         <children>
+            <Label maxWidth="1.7976931348623157E308" minWidth="80.0" text="Titel">
+               <HBox.margin>
+                  <Insets right="10.0" />
+               </HBox.margin></Label>
+            <TextField fx:id="titleTextField" maxWidth="1.7976931348623157E308" minWidth="200.0" HBox.hgrow="ALWAYS" />
+         </children>
+         <VBox.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </VBox.margin>
+      </HBox>
+      <HBox maxWidth="1.7976931348623157E308">
+         <children>
+            <Label minWidth="80.0" text="Beschreibung">
+               <HBox.margin>
+                  <Insets right="10.0" />
+               </HBox.margin></Label>
+            <TextArea fx:id="descriptionTextField" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+         </children>
+         <VBox.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </VBox.margin>
+      </HBox>
+      <HBox maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+         <children>
+            <Label minWidth="80.0" text="Mitarbeiter">
+               <HBox.margin>
+                  <Insets right="10.0" />
+               </HBox.margin></Label>
+            <HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+               <children>
+                  <HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                     <children>
+                        <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                           <children>
+                              <TextField fx:id="searchTextField" maxWidth="1.7976931348623157E308" onKeyTyped="#searchEmployee" promptText="Suche...">
+                                 <VBox.margin>
+                                    <Insets />
+                                 </VBox.margin>
+                              </TextField>
+                              <ListView fx:id="employeeListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
+                              <HBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                                 <children>
+                                    <Region maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                                    <Button minWidth="100.0" mnemonicParsing="false" onAction="#save" text="Speichern" />
+                                    <Region maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </VBox.margin>
+                              </HBox>
+                           </children>
+                        </VBox>
+                        <VBox>
+                           <children>
+                              <Region maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
+                              <Button minHeight="30.0" minWidth="30.0" mnemonicParsing="false" onAction="#chooseEmployee" text="-&gt;">
+                                 <VBox.margin>
+                                    <Insets bottom="5.0" />
+                                 </VBox.margin></Button>
+                              <Button maxHeight="50.0" maxWidth="50.0" minHeight="30.0" minWidth="30.0" mnemonicParsing="false" onAction="#unchooseEmployee" text="&lt;-">
+                                 <VBox.margin>
+                                    <Insets top="5.0" />
+                                 </VBox.margin></Button>
+                              <Region maxHeight="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
+                           </children>
+                        </VBox>
+                        <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                           <children>
+                              <ListView fx:id="chosenEmployeeListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
+                              <HBox>
+                                 <children>
+                                    <Region maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                                       <HBox.margin>
+                                          <Insets />
+                                       </HBox.margin>
+                                    </Region>
+                                    <Button minWidth="100.0" mnemonicParsing="false" onAction="#cancel" text="Abbrechen">
+                                       <HBox.margin>
+                                          <Insets left="10.0" right="10.0" />
+                                       </HBox.margin>
+                                    </Button>
+                                    <Region maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
+                                 </children>
+                                 <VBox.margin>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                                 </VBox.margin>
+                              </HBox>
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+               </children>
+            </HBox>
+         </children>
+         <VBox.margin>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </VBox.margin>
+      </HBox>
+   </children>
+</VBox>

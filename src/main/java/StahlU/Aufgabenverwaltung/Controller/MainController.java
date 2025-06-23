@@ -1,11 +1,14 @@
 package StahlU.Aufgabenverwaltung.Controller;
 
+import StahlU.Aufgabenverwaltung.Objekte.NewTaskWindow;
 import StahlU.Aufgabenverwaltung.Objekte.Task;
 import StahlU.Aufgabenverwaltung.Objekte.Employee;
 import StahlU.Aufgabenverwaltung.Speichern.Context;
 import StahlU.Aufgabenverwaltung.Speichern.SQLStorage;
+import StahlU.Aufgabenverwaltung.Service.MainService;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -22,10 +25,15 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Objects;
 
 public class MainController {
+    private static MainController instance;
+
     public TextField firstNameField;
     public TextField lastNameField;
     public TextField employeeSearchField;
@@ -35,22 +43,44 @@ public class MainController {
     public ListView<Employee> employeeListView;
     public ListView<Task> taskListView;
 
-    private final ObservableList<Employee> employeeList = FXCollections.observableArrayList();
+    private final ObservableList<Employee> employeeList = SharedData.getEmployeeList();
+    private final ObservableList<Task> allTasks = SharedData.getTaskList();
     private final ObservableList<Employee> employeeSearchList = FXCollections.observableArrayList();
-    private final ObservableList<Task> allTasks = FXCollections.observableArrayList();
     Context context = new Context();
+    MainService mainService = new MainService();
+
+    public MainController() {
+        instance = this;
+    }
+
+    public static MainController getInstance() {
+        return instance;
+    }
+    public void loadTaskList() {
+        taskListView.setItems(mainService.getTasksForEmployee(allTasks, selectedEmployee));
+    }
 
     public void initialize() {
         context.setStorageStrategy(new SQLStorage());
         employeeListView.setFixedCellSize(25);
 
         employeeList.setAll(context.loadEmployees());
+        Collections.sort(employeeList, Comparator.comparingInt(Employee::getEmployeeId));
         employeeListView.setItems(employeeList);
+        employeeListView.setPlaceholder(new Label("Keine Mitarbeiter gefunden"));
+        taskListView.setPlaceholder(new Label("Keine Aufgaben für diesen Mitarbeiter"));
 
         allTasks.setAll(context.loadAllTasks(employeeList));
 
         updateProgress();
         employeeListView.setOnMouseClicked(this::employeeClicked);
+
+        Platform.runLater(() -> {
+            Stage stage = (Stage) employeeListView.getScene().getWindow();
+            stage.setOnCloseRequest(event -> Platform.exit());
+        });
+
+
 
         employeeListView.setCellFactory(lv -> new ListCell<Employee>() {
             private final HBox hbox = new HBox(10);
@@ -193,21 +223,12 @@ public class MainController {
             alert.showAndWait();
             return;
         }
-        String title = this.titleField.getText();
-        String description = this.descriptionField.getText();
-
-        Task newTask = new Task(title, description);
-        newTask.addEmployee(selectedEmployee);
-        context.saveTask(selectedEmployee, title, description);
-
-        allTasks.setAll(context.loadAllTasks(employeeList));
-
-        this.titleField.clear();
-        this.descriptionField.clear();
+        mainService.addTask(titleField.getText(), descriptionField.getText(), selectedEmployee, allTasks, employeeList, context);
+        titleField.clear();
+        descriptionField.clear();
         employeeListView.refresh();
-
         employeeClicked(null);
-        updateProgress();
+        mainService.updateProgress(employeeList, allTasks);
     }
 
     public void removeTask(Task task) {
@@ -220,23 +241,15 @@ public class MainController {
             if (result != ButtonType.OK) {
                 return;
             }
-            task.removeEmployee(selectedEmployee);
-            context.deleteTask(selectedEmployee, task);
-
-            allTasks.setAll(context.loadAllTasks(employeeList));
+            mainService.removeTask(task, selectedEmployee, allTasks, employeeList, context);
             employeeClicked(null);
             employeeListView.refresh();
-            updateProgress();
+            mainService.updateProgress(employeeList, allTasks);
         }
     }
 
-    private void updateProgress() {
-        for (Employee employee : employeeList) {
-            long total = allTasks.stream().filter(a -> a.hasEmployee(employee)).count();
-            long done = allTasks.stream().filter(a -> a.hasEmployee(employee) && a.isDone()).count();
-            double progress = (total == 0) ? 0.0 : (double) done / total;
-            employee.setProgress(progress);
-        }
+    void updateProgress() {
+        mainService.updateProgress(employeeList, allTasks);
     }
 
     private void employeeClicked(MouseEvent mouseEvent) {
@@ -308,25 +321,20 @@ public class MainController {
                 return;
             }
         }
-
-        employeeList.add(context.saveEmployee(firstName, lastName));
-        employeeList.setAll(context.loadEmployees());
+        mainService.addEmployee(firstName, lastName, employeeList, allTasks, context);
         employeeListView.setItems(employeeList);
-
         allTasks.setAll(context.loadAllTasks(employeeList));
         employeeListView.refresh();
-
         if (!employeeList.isEmpty()) {
             employeeListView.getSelectionModel().selectLast();
             selectedEmployee = employeeListView.getSelectionModel().getSelectedItem();
             employeeListView.requestFocus();
         }
-
         employeeSearchField.clear();
         firstNameField.clear();
         lastNameField.clear();
         taskListView.setItems(null);
-        updateProgress();
+        mainService.updateProgress(employeeList, allTasks);
     }
 
     @FXML
@@ -343,11 +351,7 @@ public class MainController {
         if (result != ButtonType.OK) {
             return;
         }
-
-        context.deleteEmployee(selectedEmployee);
-        employeeList.remove(selectedEmployee);
-        employeeListView.setItems(employeeList);
-
+        mainService.removeEmployee(selectedEmployee, employeeList, allTasks, context);
         taskListView.setItems(null);
         employeeListView.refresh();
     }
@@ -386,16 +390,21 @@ public class MainController {
 
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == saveButton) {
-                task.setDescription(descriptionFieldDialog.getText());
-                task.setTitle(titleFieldDialog.getText());
+                mainService.editTask(task, titleFieldDialog.getText(), descriptionFieldDialog.getText(), context);
                 return task;
             }
             return null;
         });
 
         dialog.showAndWait().ifPresent(updatedTask -> {
-            context.updateTaskData(updatedTask);
             taskListView.refresh();
         });
+    }
+
+    @FXML
+    public void newTask(ActionEvent actionEvent) {
+        System.out.println("Neue Aufgabe erstellen");
+        NewTaskWindow window = NewTaskWindow.getInstance();
+        window.show((Stage) employeeListView.getScene().getWindow());
     }
 }

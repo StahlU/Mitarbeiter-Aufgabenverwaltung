@@ -2,6 +2,7 @@ package StahlU.Aufgabenverwaltung.Speichern;
 
 import StahlU.Aufgabenverwaltung.Objekte.Task;
 import StahlU.Aufgabenverwaltung.Objekte.Employee;
+import StahlU.Aufgabenverwaltung.Controller.SharedData;
 import javafx.collections.ObservableList;
 
 public class Context {
@@ -19,12 +20,14 @@ public class Context {
     public Employee saveEmployee(String firstName, String lastName) {
         Employee employee = new Employee(-1, firstName, lastName);
         this.storageStrategy.saveEmployee(firstName, lastName);
+        SharedData.addEmployee(employee);
         saveJsonAsync();
         return employee;
     }
 
     public void deleteEmployee(Employee employee) {
         this.storageStrategy.deleteEmployee(employee);
+        SharedData.removeEmployee(employee);
         saveJsonAsync();
     }
 
@@ -40,6 +43,16 @@ public class Context {
         Task task = new Task(title, description);
         task.addEmployee(employee);
         this.storageStrategy.saveTask(employee, task);
+        SharedData.addTask(task);
+        saveJsonAsync();
+    }
+    public void saveTask(ObservableList<Employee> employees, String title, String description) {
+        Task task = new Task(title, description);
+        for (Employee employee : employees) {
+            task.addEmployee(employee);
+        }
+        this.storageStrategy.createTaskWithEmployees(employees, task);
+        SharedData.addTask(task);
         saveJsonAsync();
     }
 
@@ -52,6 +65,7 @@ public class Context {
         this.storageStrategy.removeTask(employee, task);
         if (task.getEmployeeList().isEmpty()) {
             this.storageStrategy.deleteTask(task);
+            SharedData.removeTask(task);
         }
         saveJsonAsync();
     }

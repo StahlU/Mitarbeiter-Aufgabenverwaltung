@@ -67,12 +67,6 @@ public class Task {
         }
     }
 
-    public void setStatus(boolean status) {
-        this.status = status;
-        if (doneProperty != null) {
-            doneProperty.set(status);
-        }
-    }
 
     public SimpleBooleanProperty statusProperty() {
         if (doneProperty == null) {
@@ -114,11 +108,7 @@ public class Task {
     }
 
     public boolean hasEmployee(Employee employee) {
-        for (Employee e : employeeList) {
-            if (e.getEmployeeId() == employee.getEmployeeId()) {
-                return true;
-            }
-        }
-        return false;
+        if (employee == null) return false;
+        return employeeList.stream().anyMatch(e -> e.getEmployeeId() == employee.getEmployeeId());
     }
 }

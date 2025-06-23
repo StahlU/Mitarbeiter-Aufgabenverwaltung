@@ -69,42 +69,52 @@ public class SQLStorage implements IStorageStrategy {
         }
     }
 
-    @Override
+@Override
+public void updateEmployee(Employee employee) {
+
+    System.out.println("wird noch nicht unterstützt");
+}
+
+@Override
     public ObservableList<Task> loadTasks(Employee employee, ObservableList<Employee> globalEmployeeList) {
         ObservableList<Task> taskList = FXCollections.observableArrayList();
-        String sqlTasks = "SELECT * FROM aufgaben";
-        String sqlAssignment = "SELECT mitarbeiter_id FROM mitarbeiter_aufgaben WHERE aufgabe_id = ?";
+        Map<Integer, Task> taskMap = new HashMap<>();
+        Map<Integer, ObservableList<Employee>> taskEmployees = new HashMap<>();
 
-        Map<Integer, Employee> employeeCache = new HashMap<>();
-        for (Employee e : globalEmployeeList) {
-            employeeCache.put(e.getEmployeeId(), e);
-        }
+        String sql = "SELECT aufgabe_id, titel, beschreibung, status, mitarbeiter_id, vorname, nachname " +
+                     "FROM aufgaben_mit_mitarbeitern";
+
         try (Connection conn = DriverManager.getConnection(url);
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sqlTasks)) {
+             ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                Task task = new Task(
-                        rs.getInt("aufgabe_id"),
-                        rs.getString("titel"),
-                        rs.getString("beschreibung"),
-                        rs.getInt("status") == 1);
-                ObservableList<Employee> assignedEmployees = FXCollections.observableArrayList();
-                try (PreparedStatement pstmt = conn.prepareStatement(sqlAssignment)) {
-                    pstmt.setInt(1, task.getTaskId());
-                    ResultSet relRs = pstmt.executeQuery();
-                    while (relRs.next()) {
-                        int eid = relRs.getInt("mitarbeiter_id");
-                        Employee e = employeeCache.get(eid);
-                        if (e != null) {
-                            assignedEmployees.add(e);
-                        }
-                    }
+                int taskId = rs.getInt("aufgabe_id");
+                Task task = taskMap.get(taskId);
+                if (task == null) {
+                    task = new Task(
+                            taskId,
+                            rs.getString("titel"),
+                            rs.getString("beschreibung"),
+                            rs.getInt("status") == 1
+                    );
+                    taskMap.put(taskId, task);
+                    taskEmployees.put(taskId, FXCollections.observableArrayList());
                 }
-                task.setEmployeeList(assignedEmployees);
-                if (employee == null) {
-                    taskList.add(task);
-                } else if (task.hasEmployee(employee)) {
-                    taskList.add(task);
+                int empId = rs.getInt("mitarbeiter_id");
+                if (empId > 0) {
+                    Employee emp = new Employee(
+                            empId,
+                            rs.getString("vorname"),
+                            rs.getString("nachname")
+                    );
+                    taskEmployees.get(taskId).add(emp);
+                }
+            }
+            for (Task t : taskMap.values()) {
+                ObservableList<Employee> emps = taskEmployees.get(t.getTaskId());
+                t.setEmployeeList(emps);
+                if (employee == null || t.hasEmployee(employee)) {
+                    taskList.add(t);
                 }
             }
         } catch (SQLException e) {
@@ -173,13 +183,14 @@ public class SQLStorage implements IStorageStrategy {
 
     @Override
     public void deleteTask(Task task) {
+        String sqlAssignment = "DELETE FROM mitarbeiter_aufgaben WHERE aufgabe_id = ?";
+        String sqlTask = "DELETE FROM aufgaben WHERE aufgabe_id = ?";
+
         taskMap.remove(task.getTaskId());
         if (task == null) {
             System.out.println("Fehler: Die Aufgabe ist null und kann nicht gelöscht werden.");
             return;
         }
-        String sqlAssignment = "DELETE FROM mitarbeiter_aufgaben WHERE aufgabe_id = ?";
-        String sqlTask = "DELETE FROM aufgaben WHERE aufgabe_id = ?";
 
         try (Connection conn = DriverManager.getConnection(url)) {
             conn.createStatement().execute("PRAGMA foreign_keys = ON;");
@@ -225,5 +236,41 @@ public class SQLStorage implements IStorageStrategy {
         }
 
         task.getEmployeeList().remove(employee);
+    }
+
+    public void createTaskWithEmployees(ObservableList<Employee> employees, Task task) {
+        String sqlTask = "INSERT INTO aufgaben(titel, beschreibung, status) VALUES(?,?,?)";
+        String sql = "INSERT INTO mitarbeiter_aufgaben (mitarbeiter_id, aufgabe_id,zugewiesen_am) VALUES (?, ?, ?)";
+
+        if (task.getTaskId() <= 0) {
+
+            try (Connection conn = DriverManager.getConnection(url);
+                 PreparedStatement pstmt = conn.prepareStatement(sqlTask, Statement.RETURN_GENERATED_KEYS)) {
+                pstmt.setString(1, task.getTitle());
+                pstmt.setString(2, task.getDescription());
+                pstmt.setBoolean(3, task.isDone());
+                pstmt.executeUpdate();
+                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        task.setTaskId(generatedKeys.getInt(1));
+                    }
+                }
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+                return;
+            }
+        }
+
+        for (Employee employee : employees) {
+            try (Connection conn = DriverManager.getConnection(url);
+                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                pstmt.setInt(1, employee.getEmployeeId());
+                pstmt.setInt(2, task.getTaskId());
+                pstmt.setDate(3, Date.valueOf(java.time.LocalDate.now()));
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+        }
     }
 }

@@ -37,7 +37,20 @@ public class SQLFunktionen {
                         "zugewiesen_am DATE," +
                         "PRIMARY KEY (mitarbeiter_id, aufgabe_id)," +
                         "FOREIGN KEY (mitarbeiter_id) REFERENCES mitarbeiter(mitarbeiter_id) ON DELETE CASCADE," +
-                        "FOREIGN KEY (aufgabe_id) REFERENCES aufgaben(aufgabe_id) ON DELETE CASCADE);"
+                        "FOREIGN KEY (aufgabe_id) REFERENCES aufgaben(aufgabe_id) ON DELETE CASCADE);",
+
+                "CREATE VIEW IF NOT EXISTS aufgaben_mit_mitarbeitern AS " +
+                        "SELECT " +
+                        " a.aufgabe_id, " +
+                        " a.titel, " +
+                        " a.beschreibung, " +
+                        " a.status, " +
+                        " m.mitarbeiter_id, " +
+                        " m.vorname, " +
+                        " m.nachname " +
+                        "FROM aufgaben a " +
+                        "LEFT JOIN mitarbeiter_aufgaben ma ON a.aufgabe_id = ma.aufgabe_id " +
+                        "LEFT JOIN mitarbeiter m ON ma.mitarbeiter_id = m.mitarbeiter_id;"
         };
 
         try (Connection conn = DriverManager.getConnection(url);
