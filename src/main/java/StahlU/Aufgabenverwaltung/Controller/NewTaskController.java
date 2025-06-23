@@ -6,6 +6,7 @@ import StahlU.Aufgabenverwaltung.Speichern.SQLStorage;
 import StahlU.Aufgabenverwaltung.Service.TaskEmployeeService;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -42,11 +43,8 @@ public class NewTaskController {
 
         context.setStorageStrategy(new SQLStorage());
 
-
         employeeObservableList.setAll(SharedData.getEmployeeList());
         Collections.sort(employeeObservableList, Comparator.comparingInt(Employee::getEmployeeId));
-
-
 
         employeeListView.setItems(employeeObservableList);
         chosenEmployeeListView.setItems(chosenEmployeeObservableList);
@@ -54,10 +52,16 @@ public class NewTaskController {
         chosenEmployeeListView.setPlaceholder(new Label("Keine Mitarbeiter ausgewählt"));
         employeeListView.setPlaceholder(new Label("Keine Mitarbeiter gefunden"));
 
-
         employeeListView.setCellFactory(listView -> new EmployeeCell());
         chosenEmployeeListView.setCellFactory(listView -> new EmployeeCell());
 
+        Platform.runLater(() -> {
+            Stage stage = (Stage) employeeListView.getScene().getWindow();
+            stage.setOnCloseRequest(event -> {
+                event.consume(); // verhindert das automatische Schließen
+                cancel();
+            });
+        });
     }
     @FXML
     public void save() {
