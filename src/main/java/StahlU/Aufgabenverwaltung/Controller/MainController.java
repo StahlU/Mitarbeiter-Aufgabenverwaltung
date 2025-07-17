@@ -46,7 +46,7 @@ public class MainController {
     private final ObservableList<Employee> employeeList = SharedData.getEmployeeList();
     private final ObservableList<Task> allTasks = SharedData.getTaskList();
     private final ObservableList<Employee> employeeSearchList = FXCollections.observableArrayList();
-    Context context = new Context();
+    Context context = Context.getInstance();
     MainService mainService = new MainService();
 
     public MainController() {

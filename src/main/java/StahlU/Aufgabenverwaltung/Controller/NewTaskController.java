@@ -31,7 +31,7 @@ public class NewTaskController {
 
     public ListView<Employee> employeeListView;
     public ListView<Employee> chosenEmployeeListView;
-    Context context = new Context();
+    Context context = Context.getInstance();
 
     Employee selectedEmployee = null;
 

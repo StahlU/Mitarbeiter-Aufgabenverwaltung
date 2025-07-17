@@ -169,7 +169,7 @@ public void updateEmployee(Employee employee) {
 
     @Override
     public void updateTaskStatus(Task task) {
-        String sql = "UPDATE aufgaben SET status = ? WHERE aufgabe_id = ?";
+       String sql = "UPDATE aufgaben SET status = ? WHERE aufgabe_id = ?";
 
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

@@ -13,9 +13,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class MainService {
-    Context context;
+    Context context = Context.getInstance();
     public MainService() {
-        context = new Context();
         context.setStorageStrategy(new SQLStorage());
     }
 
